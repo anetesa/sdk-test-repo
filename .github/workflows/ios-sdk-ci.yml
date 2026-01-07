@@ -343,30 +343,6 @@ jobs:
           
           echo "✅ Simulator setup complete: $SIMULATOR_ID"
       
-      - name: Build XCFramework
-        if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && steps.check_tag.outputs.exists == 'false' && (steps.check_framework_only.outputs.build_needed == 'true' || (steps.check_framework_only.outputs.framework_only == 'true' && steps.verify_framework.outputs.exists != 'true'))
-        run: |
-          echo "🔨 Building new framework..."
-          cd ios-sdk/libs
-          chmod +x build_and_test_ci.sh
-          bash build_and_test_ci.sh build
-          ls -lh AriseMobile.xcframework
-      
-      - name: Use existing framework
-        if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && steps.check_tag.outputs.exists == 'false' && steps.check_framework_only.outputs.framework_only == 'true' && steps.verify_framework.outputs.exists == 'true'
-        run: |
-          echo "✅ Using existing framework from commit"
-          echo "Framework location: ios-sdk/libs/AriseMobile.xcframework"
-          ls -lh ios-sdk/libs/AriseMobile.xcframework
-          
-          # Verify framework is valid
-          if [ ! -f "ios-sdk/libs/AriseMobile.xcframework/Info.plist" ]; then
-            echo "❌ Error: Framework Info.plist not found"
-            exit 1
-          fi
-          
-          echo "✅ Existing framework verified and ready to use"
-      
       - name: Run Tests
         timeout-minutes: 360
         run: |
@@ -451,6 +427,30 @@ jobs:
             ios-sdk/coverage/detailed_coverage_report.md
           retention-days: 30
           if-no-files-found: warn
+      
+      - name: Build XCFramework
+        if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && steps.check_tag.outputs.exists == 'false' && (steps.check_framework_only.outputs.build_needed == 'true' || (steps.check_framework_only.outputs.framework_only == 'true' && steps.verify_framework.outputs.exists != 'true'))
+        run: |
+          echo "🔨 Building new framework..."
+          cd ios-sdk/libs
+          chmod +x build_and_test_ci.sh
+          bash build_and_test_ci.sh build
+          ls -lh AriseMobile.xcframework
+      
+      - name: Use existing framework
+        if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && steps.check_tag.outputs.exists == 'false' && steps.check_framework_only.outputs.framework_only == 'true' && steps.verify_framework.outputs.exists == 'true'
+        run: |
+          echo "✅ Using existing framework from commit"
+          echo "Framework location: ios-sdk/libs/AriseMobile.xcframework"
+          ls -lh ios-sdk/libs/AriseMobile.xcframework
+          
+          # Verify framework is valid
+          if [ ! -f "ios-sdk/libs/AriseMobile.xcframework/Info.plist" ]; then
+            echo "❌ Error: Framework Info.plist not found"
+            exit 1
+          fi
+          
+          echo "✅ Existing framework verified and ready to use"
       
       - name: Detect Module Name from Project Settings
         if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && steps.check_tag.outputs.exists == 'false'
