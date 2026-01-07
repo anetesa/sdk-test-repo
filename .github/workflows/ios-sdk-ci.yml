@@ -1,15 +1,20 @@
-name: Build and Release iOS SDK
+name: iOS SDK CI
 
 on:
   push:
     branches: [main]
     paths:
       - 'ios-sdk/**'
-      - '.github/workflows/ios-sdk-release.yml'
+      - '.github/workflows/ios-sdk-ci.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'ios-sdk/**'
+      - '.github/workflows/ios-sdk-ci.yml'
   workflow_dispatch:
 
 jobs:
-  build-and-release:
+  build-test-and-release:
     # Use macos-26 for access to Xcode with Swift 6.2.1+ and newer iOS SDK
     # CloudCommerce requires Swift 6.2.1+ and ProximityReader.StoreAndForwardStatus
     runs-on: macos-26
@@ -19,7 +24,7 @@ jobs:
       - name: Checkout source repository
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0  # Fetch all history for tags
+          fetch-depth: 0
       
       - name: Setup Xcode
         uses: maxim-lobanov/setup-xcode@v1
@@ -34,10 +39,14 @@ jobs:
         uses: actions/cache@v4
         with:
           path: |
+            DerivedData-Tests
             ~/Library/Developer/Xcode/DerivedData
             ~/Library/Caches/org.swift.swiftpm
-          key: ${{ runner.os }}-xcode-${{ hashFiles('ios-sdk/src/AriseMobileSdk.xcodeproj/project.pbxproj', 'ios-sdk/Distribution/Package.swift') }}
+            DerivedData-Tests/SourcePackages
+            ios-sdk/libs/Build
+          key: ${{ runner.os }}-xcode-ci-${{ hashFiles('ios-sdk/src/AriseMobileSdk.xcodeproj/project.pbxproj', 'ios-sdk/src/AriseMobileSdk.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved') }}
           restore-keys: |
+            ${{ runner.os }}-xcode-ci-
             ${{ runner.os }}-xcode-
       
       - name: Verify Swift and Xcode versions
@@ -54,16 +63,9 @@ jobs:
           echo "⚠️  NOTE: Using latest-stable Xcode to match local development environment"
           echo "⚠️  If you encounter Swift version mismatch errors, ensure CI and local Xcode versions match"
           echo "⚠️  CloudCommerce.xcframework requires Swift 6.2.1+ and newer iOS SDK for ProximityReader"
-          # #region agent log - CI Swift version capture
-          echo "=== CI SWIFT VERSION DEBUG ==="
-          echo "HYPOTHESIS: H1 - Swift toolchain version mismatch"
-          echo "XCODE_VERSION: $(xcodebuild -version)"
-          echo "SWIFT_VERSION: $(swift --version)"
-          echo "SWIFT_FULL: $(xcrun swift --version)"
-          echo "=============================="
-          # #endregion
       
       - name: Get version from Info.plist
+        if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
         id: get_version
         run: |
           VERSION=$(/usr/libexec/PlistBuddy -c "Print :CFBundleShortVersionString" ios-sdk/src/AriseMobileSdk/AriseMobileSdk-Info.plist)
@@ -73,6 +75,7 @@ jobs:
           echo "🏷️  Tag: v$VERSION"
       
       - name: Check if tag already exists
+        if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
         id: check_tag
         run: |
           TAG="${{ steps.get_version.outputs.tag }}"
@@ -85,8 +88,8 @@ jobs:
           fi
       
       - name: Check if only framework files changed
+        if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && steps.check_tag.outputs.exists == 'false'
         id: check_framework_only
-        if: steps.check_tag.outputs.exists == 'false'
         run: |
           # Get list of changed files in the commit
           if [ "${{ github.event_name }}" == "push" ]; then
@@ -123,6 +126,7 @@ jobs:
             "*.pbxproj"
             "build_framework"
             "build_framework_ci"
+            "build_and_test_ci"
           )
           
           # Check each changed file
@@ -134,7 +138,7 @@ jobs:
             # Skip if it's a framework file
             if [[ "$file" == *"AriseMobile.xcframework"* ]] || \
                [[ "$file" == *"CloudCommerce.xcframework"* ]] || \
-               [[ "$file" == *"ios-sdk/libs/"* ]] && [[ "$file" != *"build_framework"* ]]; then
+               [[ "$file" == *"ios-sdk/libs/"* ]] && [[ "$file" != *"build_framework"* ]] && [[ "$file" != *"build_and_test"* ]]; then
               echo "  ✅ Framework file: $file (skip)"
               continue
             fi
@@ -168,8 +172,8 @@ jobs:
           fi
       
       - name: Verify existing framework exists
+        if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && steps.check_tag.outputs.exists == 'false' && steps.check_framework_only.outputs.framework_only == 'true'
         id: verify_framework
-        if: steps.check_tag.outputs.exists == 'false' && steps.check_framework_only.outputs.framework_only == 'true'
         run: |
           FRAMEWORK_PATH="ios-sdk/libs/AriseMobile.xcframework"
           
@@ -209,25 +213,138 @@ jobs:
             echo "Will fall back to building"
           fi
       
-      - name: Log Swift Version Before Build
-        if: steps.check_tag.outputs.exists == 'false'
+      - name: Create and Boot iOS Simulator
         run: |
-          echo "Swift version at build time:"
-          xcrun swift --version
-          echo ""
-          echo "Swift compiler path:"
-          which swift
-          xcrun --find swift
-          # #region agent log - Pre-build Swift version
-          echo "=== PRE-BUILD SWIFT VERSION DEBUG ==="
-          echo "HYPOTHESIS: H1 - Swift toolchain version mismatch"
-          echo "SWIFT_VERSION_BUILD: $(xcrun swift --version)"
-          echo "SWIFT_PATH: $(xcrun --find swift)"
-          echo "====================================="
-          # #endregion
-
+          echo "📱 Setting up iOS Simulator for tests..."
+          
+          # List available runtimes
+          echo "Available iOS runtimes:"
+          xcrun simctl list runtimes available | grep iOS || true
+          
+          # Get the latest iOS runtime identifier (e.g., "iOS-18-2" or "com.apple.CoreSimulator.SimRuntime.iOS-18-2")
+          # Try to get the runtime identifier directly
+          LATEST_RUNTIME_ID=$(xcrun simctl list runtimes available | grep -i "iOS" | tail -1 | awk '{print $NF}' | tr -d '()')
+          
+          if [ -z "$LATEST_RUNTIME_ID" ]; then
+            # Fallback: try to extract version number and construct identifier
+            RUNTIME_VERSION=$(xcrun simctl list runtimes available | grep -i "iOS" | tail -1 | sed -E 's/.*iOS[^0-9]*([0-9]+)[^0-9]*([0-9]+).*/\1-\2/' | head -1)
+            if [ -n "$RUNTIME_VERSION" ]; then
+              LATEST_RUNTIME_ID="iOS-$RUNTIME_VERSION"
+            else
+              # Last resort: try to find any iOS runtime
+              LATEST_RUNTIME_ID=$(xcrun simctl list runtimes available | grep -i "iOS" | head -1 | awk '{print $NF}' | tr -d '()')
+            fi
+          fi
+          
+          if [ -z "$LATEST_RUNTIME_ID" ]; then
+            echo "❌ No iOS runtime found. Available runtimes:"
+            xcrun simctl list runtimes available
+            exit 1
+          fi
+          
+          echo "📱 Using iOS runtime: $LATEST_RUNTIME_ID"
+          
+          # Check if a simulator already exists (check for any booted iPhone first, then available)
+          EXISTING_BOOTED=$(xcrun simctl list devices | grep -i "iPhone" | grep "Booted" | head -1 | sed 's/.*(\([A-F0-9-]*\)).*/\1/')
+          
+          if [ -n "$EXISTING_BOOTED" ]; then
+            echo "✅ Found booted iPhone simulator: $EXISTING_BOOTED"
+            SIMULATOR_ID="$EXISTING_BOOTED"
+          else
+            # Check for any available iPhone simulator
+            EXISTING_SIMULATOR=$(xcrun simctl list devices available | grep -i "iPhone" | head -1 | sed 's/.*(\([A-F0-9-]*\)).*/\1/')
+            
+            if [ -n "$EXISTING_SIMULATOR" ]; then
+              echo "✅ Found existing iPhone simulator: $EXISTING_SIMULATOR"
+              SIMULATOR_ID="$EXISTING_SIMULATOR"
+            else
+              # Create a new iPhone simulator
+              echo "📱 Creating new iPhone simulator..."
+              SIMULATOR_NAME="iPhone 15 Pro"
+              SIMULATOR_ID=$(xcrun simctl create "$SIMULATOR_NAME" "iPhone 15 Pro" "$LATEST_RUNTIME_ID" 2>&1)
+              CREATE_EXIT_CODE=$?
+              
+              if [ $CREATE_EXIT_CODE -eq 0 ] && [ -n "$SIMULATOR_ID" ]; then
+                # Success - extract UUID if needed
+                if echo "$SIMULATOR_ID" | grep -qE '[A-F0-9]{8}-[A-F0-9]{4}-[A-F0-9]{4}-[A-F0-9]{4}-[A-F0-9]{12}'; then
+                  SIMULATOR_ID=$(echo "$SIMULATOR_ID" | grep -oE '[A-F0-9]{8}-[A-F0-9]{4}-[A-F0-9]{4}-[A-F0-9]{4}-[A-F0-9]{12}' | head -1)
+                fi
+                echo "✅ Created simulator: $SIMULATOR_NAME (ID: $SIMULATOR_ID)"
+              else
+                echo "⚠️  Failed to create iPhone 15 Pro, trying iPhone 14 Pro..."
+                SIMULATOR_NAME="iPhone 14 Pro"
+                SIMULATOR_ID=$(xcrun simctl create "$SIMULATOR_NAME" "iPhone 14 Pro" "$LATEST_RUNTIME_ID" 2>&1)
+                CREATE_EXIT_CODE=$?
+                
+                if [ $CREATE_EXIT_CODE -eq 0 ] && [ -n "$SIMULATOR_ID" ]; then
+                  if echo "$SIMULATOR_ID" | grep -qE '[A-F0-9]{8}-[A-F0-9]{4}-[A-F0-9]{4}-[A-F0-9]{4}-[A-F0-9]{12}'; then
+                    SIMULATOR_ID=$(echo "$SIMULATOR_ID" | grep -oE '[A-F0-9]{8}-[A-F0-9]{4}-[A-F0-9]{4}-[A-F0-9]{4}-[A-F0-9]{12}' | head -1)
+                  fi
+                  echo "✅ Created simulator: $SIMULATOR_NAME (ID: $SIMULATOR_ID)"
+                else
+                  echo "⚠️  Failed to create iPhone 14 Pro, trying generic iPhone..."
+                  SIMULATOR_NAME="iPhone"
+                  SIMULATOR_ID=$(xcrun simctl create "$SIMULATOR_NAME" "iPhone" "$LATEST_RUNTIME_ID" 2>&1)
+                  CREATE_EXIT_CODE=$?
+                  
+                  if [ $CREATE_EXIT_CODE -eq 0 ] && [ -n "$SIMULATOR_ID" ]; then
+                    if echo "$SIMULATOR_ID" | grep -qE '[A-F0-9]{8}-[A-F0-9]{4}-[A-F0-9]{4}-[A-F0-9]{4}-[A-F0-9]{12}'; then
+                      SIMULATOR_ID=$(echo "$SIMULATOR_ID" | grep -oE '[A-F0-9]{8}-[A-F0-9]{4}-[A-F0-9]{4}-[A-F0-9]{4}-[A-F0-9]{12}' | head -1)
+                    fi
+                    echo "✅ Created simulator: $SIMULATOR_NAME (ID: $SIMULATOR_ID)"
+                  else
+                    echo "❌ Failed to create simulator. Error: $SIMULATOR_ID"
+                    echo "Available device types:"
+                    xcrun simctl list devicetypes | grep -i "iPhone" | head -5
+                    exit 1
+                  fi
+                fi
+              fi
+            fi
+          fi
+          
+          # Boot the simulator
+          echo "🚀 Booting simulator: $SIMULATOR_ID"
+          xcrun simctl boot "$SIMULATOR_ID" || {
+            # If already booted, that's fine
+            if xcrun simctl list devices | grep "$SIMULATOR_ID" | grep -q "Booted"; then
+              echo "✅ Simulator already booted"
+            else
+              echo "❌ Failed to boot simulator"
+              exit 1
+            fi
+          }
+          
+          # Wait for simulator to be ready
+          echo "⏳ Waiting for simulator to be ready..."
+          timeout=60
+          elapsed=0
+          while [ $elapsed -lt $timeout ]; do
+            if xcrun simctl list devices | grep "$SIMULATOR_ID" | grep -q "Booted"; then
+              # Check if simulator is actually ready by checking its state
+              STATE=$(xcrun simctl list devices | grep "$SIMULATOR_ID" | grep -oE "(Booted|Shutdown)")
+              if [ "$STATE" = "Booted" ]; then
+                echo "✅ Simulator is ready"
+                break
+              fi
+            fi
+            sleep 2
+            elapsed=$((elapsed + 2))
+            echo "   Waiting... ($elapsed/$timeout seconds)"
+          done
+          
+          if [ $elapsed -ge $timeout ]; then
+            echo "⚠️  Simulator boot timeout, but continuing..."
+          fi
+          
+          # Verify simulator is available
+          echo "📱 Verifying simulator availability..."
+          xcrun simctl list devices | grep "$SIMULATOR_ID" || echo "⚠️  Simulator not found in list"
+          
+          echo "✅ Simulator setup complete: $SIMULATOR_ID"
+      
       - name: Build XCFramework
-        if: steps.check_tag.outputs.exists == 'false' && (steps.check_framework_only.outputs.build_needed == 'true' || (steps.check_framework_only.outputs.framework_only == 'true' && steps.verify_framework.outputs.exists != 'true'))
+        if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && steps.check_tag.outputs.exists == 'false' && (steps.check_framework_only.outputs.build_needed == 'true' || (steps.check_framework_only.outputs.framework_only == 'true' && steps.verify_framework.outputs.exists != 'true'))
         run: |
           echo "🔨 Building new framework..."
           cd ios-sdk/libs
@@ -236,7 +353,7 @@ jobs:
           ls -lh AriseMobile.xcframework
       
       - name: Use existing framework
-        if: steps.check_tag.outputs.exists == 'false' && steps.check_framework_only.outputs.framework_only == 'true' && steps.verify_framework.outputs.exists == 'true'
+        if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && steps.check_tag.outputs.exists == 'false' && steps.check_framework_only.outputs.framework_only == 'true' && steps.verify_framework.outputs.exists == 'true'
         run: |
           echo "✅ Using existing framework from commit"
           echo "Framework location: ios-sdk/libs/AriseMobile.xcframework"
@@ -249,27 +366,94 @@ jobs:
           fi
           
           echo "✅ Existing framework verified and ready to use"
-          # #region agent log - Framework status
-          echo "=== FRAMEWORK STATUS ==="
-          echo "Framework exists: true"
-          echo "Source: existing framework from commit"
-          find ios-sdk/libs/AriseMobile.xcframework -name "*.swiftinterface" -exec echo "Interface file: {}" \; -exec head -1 {} \; 2>/dev/null || echo "No swiftinterface files found"
-          echo "======================="
-          # #endregion
-
-      - name: Extract and Upload SwiftInterface Files
-        if: steps.check_tag.outputs.exists == 'false'
+      
+      - name: Run Tests
+        timeout-minutes: 360
+        run: |
+          # Make combined build and test script executable
+          chmod +x ios-sdk/libs/build_and_test_ci.sh
+          
+          # Run tests using combined CI script (test mode)
+          ./ios-sdk/libs/build_and_test_ci.sh test
+      
+      - name: Upload Test Results
+        if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: swiftinterface-files
+          name: test-results
           path: |
-            ios-sdk/libs/AriseMobile.xcframework/**/*.swiftinterface
-            ios-sdk/libs/AriseMobile.xcframework/**/module.modulemap
-          retention-days: 7
+            test-results.xcresult
+            /tmp/test_output.log
+          retention-days: 30
+          if-no-files-found: warn
+      
+      - name: Generate Test Coverage Report
+        if: always()
+        run: |
+          if [ -d "./test-results.xcresult" ]; then
+            echo "📊 Generating test coverage report using project scripts..."
+            
+            # Make scripts executable
+            chmod +x ios-sdk/coverage/scripts/*.sh 2>/dev/null || true
+            
+            # Generate coverage report using project script
+            if [ -f "ios-sdk/coverage/scripts/generate_coverage_report.sh" ]; then
+              echo "✅ Using generate_coverage_report.sh..."
+              cd ios-sdk/coverage/scripts
+              bash generate_coverage_report.sh "../../../test-results.xcresult" || {
+                echo "⚠️  generate_coverage_report.sh failed, trying detailed report..."
+                bash generate_detailed_coverage.sh "../../../test-results.xcresult" || {
+                  echo "⚠️  Detailed report also failed, using fallback"
+                }
+              }
+              cd ../../..
+            elif [ -f "ios-sdk/coverage/scripts/generate_detailed_coverage.sh" ]; then
+              echo "✅ Using generate_detailed_coverage.sh..."
+              cd ios-sdk/coverage/scripts
+              bash generate_detailed_coverage.sh "../../../test-results.xcresult" || echo "⚠️  Detailed report generation failed"
+              cd ../../..
+            else
+              echo "⚠️  Coverage report scripts not found, using fallback..."
+            fi
+            
+            # Also run check_coverage.sh for summary
+            if [ -f "ios-sdk/coverage/scripts/check_coverage.sh" ]; then
+              echo ""
+              echo "📋 Running coverage check..."
+              cd ios-sdk/coverage/scripts
+              bash check_coverage.sh 75 "../../../test-results.xcresult" || echo "⚠️  Coverage check failed"
+              cd ../../..
+            fi
+            
+            # Display generated reports if they exist
+            if [ -f "ios-sdk/coverage/coverage_report.md" ]; then
+              echo ""
+              echo "✅ Coverage report generated: ios-sdk/coverage/coverage_report.md"
+              echo "📄 Report preview (first 50 lines):"
+              head -50 ios-sdk/coverage/coverage_report.md || true
+            fi
+            
+            if [ -f "ios-sdk/coverage/detailed_coverage_report.md" ]; then
+              echo ""
+              echo "✅ Detailed coverage report generated: ios-sdk/coverage/detailed_coverage_report.md"
+            fi
+          else
+            echo "⚠️  Test results bundle not found at ./test-results.xcresult"
+          fi
+      
+      - name: Upload Coverage Reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-reports
+          path: |
+            ios-sdk/coverage/coverage_report.md
+            ios-sdk/coverage/detailed_coverage_report.md
+          retention-days: 30
           if-no-files-found: warn
       
       - name: Detect Module Name from Project Settings
-        if: steps.check_tag.outputs.exists == 'false'
+        if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && steps.check_tag.outputs.exists == 'false'
         id: detect_module_name
         run: |
           # Get module name from project settings (this is the source of truth before build)
@@ -298,16 +482,9 @@ jobs:
           
           echo "module_name=$MODULE_NAME" >> $GITHUB_OUTPUT
           echo "✅ Detected module name: $MODULE_NAME"
-          # #region agent log - Module name detection
-          echo "=== MODULE NAME DETECTION ==="
-          echo "HYPOTHESIS: H2 - Module name must match binary target name"
-          echo "DETECTED_MODULE_NAME: $MODULE_NAME"
-          echo "SOURCE: project.pbxproj and xcodebuild showBuildSettings"
-          echo "=============================="
-          # #endregion
-
+      
       - name: Update Package.swift and Wrapper with Correct Module Name
-        if: steps.check_tag.outputs.exists == 'false'
+        if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && steps.check_tag.outputs.exists == 'false'
         run: |
           MODULE_NAME="${{ steps.detect_module_name.outputs.module_name }}"
           echo "Updating Package.swift and wrapper to use module name: $MODULE_NAME"
@@ -355,14 +532,9 @@ jobs:
           grep -E "binaryTarget|name:" ios-sdk/Distribution/Package.swift | head -5
           echo "Wrapper import:"
           grep "@_exported import" ios-sdk/Distribution/Sources/AriseMobileSdkIos/AriseMobileSdk.swift | head -1
-          # #region agent log - Package.swift update
-          echo "=== PACKAGE.SWIFT UPDATE ==="
-          echo "UPDATED_MODULE_NAME: $MODULE_NAME"
-          echo "============================="
-          # #endregion
-
+      
       - name: Copy frameworks to distribution package
-        if: steps.check_tag.outputs.exists == 'false'
+        if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && steps.check_tag.outputs.exists == 'false'
         run: |
           # Ensure libs directory exists in distribution package
           mkdir -p ios-sdk/Distribution/libs
@@ -386,19 +558,9 @@ jobs:
           
           echo "✅ Frameworks copied to distribution package"
           ls -lh ios-sdk/Distribution/libs/
-          echo ""
-          echo "Checking Swift version in swiftinterface files:"
-          find ios-sdk/Distribution/libs -name "*.swiftinterface" -type f -exec head -1 {} \; | head -5
-          # #region agent log - SwiftInterface version check
-          echo "=== SWIFTINTERFACE VERSION CHECK ==="
-          echo "HYPOTHESIS: H1 - Swift toolchain version mismatch"
-          echo "INTERFACE_VERSIONS:"
-          find ios-sdk/Distribution/libs -name "*.swiftinterface" -type f -exec echo "File: {}" \; -exec head -1 {} \; | head -10
-          echo "===================================="
-          # #endregion
       
       - name: Create archive with frameworks
-        if: steps.check_tag.outputs.exists == 'false'
+        if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && steps.check_tag.outputs.exists == 'false'
         run: |
           cd ios-sdk/Distribution
           zip -r AriseMobile-v${{ steps.get_version.outputs.version }}-xcframeworks.zip libs/
@@ -406,7 +568,7 @@ jobs:
           echo "archive_path=ios-sdk/Distribution/AriseMobile-v${{ steps.get_version.outputs.version }}-xcframeworks.zip" >> $GITHUB_ENV
       
       - name: Upload xcframework artifact for deployment
-        if: steps.check_tag.outputs.exists == 'false'
+        if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && steps.check_tag.outputs.exists == 'false'
         uses: actions/upload-artifact@v4
         with:
           name: ios-sdk-xcframework
@@ -417,7 +579,7 @@ jobs:
           if-no-files-found: error
       
       - name: Setup distribution repository
-        if: steps.check_tag.outputs.exists == 'false'
+        if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && steps.check_tag.outputs.exists == 'false'
         run: |
           REPO_URL="https://x-access-token:${{ secrets.DISTRIBUTION_REPO_TOKEN }}@github.com/${{ secrets.DISTRIBUTION_REPO }}.git"
           mkdir -p distribution-repo
@@ -453,14 +615,14 @@ jobs:
           fi
       
       - name: Configure git for distribution repo
-        if: steps.check_tag.outputs.exists == 'false'
+        if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && steps.check_tag.outputs.exists == 'false'
         working-directory: distribution-repo
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
       
       - name: Copy files to distribution repository
-        if: steps.check_tag.outputs.exists == 'false'
+        if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && steps.check_tag.outputs.exists == 'false'
         run: |
           # Copy Package.swift and other necessary files
           cp ios-sdk/Distribution/Package.swift distribution-repo/
@@ -477,7 +639,7 @@ jobs:
           echo "✅ Files copied to distribution repository"
       
       - name: Commit and push to distribution repository
-        if: steps.check_tag.outputs.exists == 'false'
+        if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && steps.check_tag.outputs.exists == 'false'
         working-directory: distribution-repo
         run: |
           # Ensure we're on main branch
@@ -493,7 +655,7 @@ jobs:
           fi
       
       - name: Check if tag exists in distribution repository
-        if: steps.check_tag.outputs.exists == 'false'
+        if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && steps.check_tag.outputs.exists == 'false'
         id: check_dist_tag
         working-directory: distribution-repo
         run: |
@@ -507,7 +669,7 @@ jobs:
           fi
       
       - name: Create git tag
-        if: steps.check_tag.outputs.exists == 'false' && steps.check_dist_tag.outputs.exists == 'false'
+        if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && steps.check_tag.outputs.exists == 'false' && steps.check_dist_tag.outputs.exists == 'false'
         working-directory: distribution-repo
         run: |
           TAG="${{ steps.get_version.outputs.tag }}"
@@ -516,7 +678,7 @@ jobs:
           echo "✅ Tag $TAG created and pushed"
       
       - name: Create GitHub Release
-        if: steps.check_tag.outputs.exists == 'false' && steps.check_dist_tag.outputs.exists == 'false'
+        if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && steps.check_tag.outputs.exists == 'false' && steps.check_dist_tag.outputs.exists == 'false'
         uses: softprops/action-gh-release@v1
         with:
           repository: ${{ secrets.DISTRIBUTION_REPO }}
@@ -554,3 +716,4 @@ jobs:
             ios-sdk/Distribution/AriseMobile-v${{ steps.get_version.outputs.version }}-xcframeworks.zip
           draft: false
           prerelease: false
+
