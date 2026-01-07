@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Scheme
+   LastUpgradeVersion = "1630"
+   version = "1.7">
+   <BuildAction
+      parallelizeBuildables = "YES"
+      buildImplicitDependencies = "YES"
+      buildArchitectures = "Automatic">
+      <PreActions>
+         <ExecutionAction
+            ActionType = "Xcode.IDEStandardExecutionActionsCore.ExecutionActionType.ShellScriptAction">
+            <ActionContent
+               title = "Run Script"
+               scriptText = "#!/usr/bin/env bash&#10;set -e  # Exit immediately if a command exits with a non-zero status&#10;&#10;# &#x2014;&#x2014;&#x2014; 0) Clean up any previous react-native-config artifacts&#10;FILE_TO_DELETE=&quot;${PROJECT_DIR}/../node_modules/react-native-config/ios/ReactNativeConfig/GeneratedDotEnv.m&quot;&#10;if [ -f &quot;$FILE_TO_DELETE&quot; ]; then&#10;  rm -f &quot;$FILE_TO_DELETE&quot;&#10;  echo &quot;&#x1f5d1;  Deleted old GeneratedDotEnv.m&quot;&#10;else&#10;  echo &quot;&#x2139;&#xfe0f;  No GeneratedDotEnv.m to delete&quot;&#10;fi&#10;&#10;# &#x2014;&#x2014;&#x2014; 1) Define paths&#10;PROJECT_ROOT=&quot;${PROJECT_DIR}/../&quot;&#10;SCRIPT_PATH=&quot;${PROJECT_ROOT}scripts/process-env.rb&quot;&#10;ENV_FILE=&quot;${PROJECT_ROOT}.env&quot;&#10;&#10;# &#x2014;&#x2014;&#x2014; 2) Remove any existing .env file&#10;if [ -f &quot;$ENV_FILE&quot; ]; then&#10;  rm -f &quot;$ENV_FILE&quot;&#10;  echo &quot;&#x1f680; Deleted old .env&quot;&#10;fi&#10;&#10;# &#x2014;&#x2014;&#x2014; 3) Run the Ruby script to regenerate .env at project root&#10;if [ ! -f &quot;$SCRIPT_PATH&quot; ]; then&#10;  echo &quot;&#x274c; Ruby script not found at $SCRIPT_PATH&quot;&#10;  exit 1&#10;fi&#10;ruby &quot;$SCRIPT_PATH&quot; --verbose&#10;echo &quot;&#x2728; Generated new .env via process-env.rb&quot;&#10;&#10;# &#x2014;&#x2014;&#x2014; 4) Append the production environment variable to the end of .env&#10;printf &quot;\nAPP_ENV=production\n&quot; &gt;&gt; &quot;$ENV_FILE&quot;&#10;echo &quot;&#x2705; Appended APP_ENV=production&quot;&#10;&#10;# &#x2014;&#x2014;&#x2014; 5) Run Sentry setup script after APP_ENV is set&#10;SENTRY_SCRIPT=&quot;${PROJECT_ROOT}scripts/setup-sentry.sh&quot;&#10;if [ -f &quot;$SENTRY_SCRIPT&quot; ]; then&#10;  echo &quot;&#x1f527; Running Sentry setup script...&quot;&#10;  bash &quot;$SENTRY_SCRIPT&quot;&#10;  echo &quot;&#x2705; Sentry configuration updated&quot;&#10;else&#10;  echo &quot;&#x26a0;&#xfe0f;  Sentry script not found at $SENTRY_SCRIPT&quot;&#10;fi&#10;&#10;# &#x2014;&#x2014;&#x2014; 6) Generate the xcconfig file for react-native-config&#10;# Write the path to .env into a temporary file&#10;echo &quot;.env&quot; &gt; /tmp/envfile&#10;&#10;# Invoke the BuildXCConfig Ruby helper to produce the Xcode configuration&#10;&quot;${SRCROOT}/../node_modules/react-native-config/ios/ReactNativeConfig/BuildXCConfig.rb&quot; \&#10;  &quot;${SRCROOT}/..&quot; \&#10;  &quot;${SRCROOT}/tmp.xcconfig&quot;&#10;">
+               <EnvironmentBuildable>
+                  <BuildableReference
+                     BuildableIdentifier = "primary"
+                     BlueprintIdentifier = "13B07F861A680F5B00A75B9A"
+                     BuildableName = "Arise.app"
+                     BlueprintName = "Arise"
+                     ReferencedContainer = "container:Arise.xcodeproj">
+                  </BuildableReference>
+               </EnvironmentBuildable>
+            </ActionContent>
+         </ExecutionAction>
+      </PreActions>
+      <BuildActionEntries>
+         <BuildActionEntry
+            buildForTesting = "YES"
+            buildForRunning = "YES"
+            buildForProfiling = "YES"
+            buildForArchiving = "YES"
+            buildForAnalyzing = "YES">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "13B07F861A680F5B00A75B9A"
+               BuildableName = "Arise.app"
+               BlueprintName = "Arise"
+               ReferencedContainer = "container:Arise.xcodeproj">
+            </BuildableReference>
+         </BuildActionEntry>
+      </BuildActionEntries>
+   </BuildAction>
+   <TestAction
+      buildConfiguration = "Debug"
+      selectedDebuggerIdentifier = "Xcode.DebuggerFoundation.Debugger.LLDB"
+      selectedLauncherIdentifier = "Xcode.DebuggerFoundation.Launcher.LLDB"
+      shouldUseLaunchSchemeArgsEnv = "YES"
+      shouldAutocreateTestPlan = "YES">
+   </TestAction>
+   <LaunchAction
+      buildConfiguration = "Debug"
+      selectedDebuggerIdentifier = "Xcode.DebuggerFoundation.Debugger.LLDB"
+      selectedLauncherIdentifier = "Xcode.DebuggerFoundation.Launcher.LLDB"
+      launchStyle = "0"
+      useCustomWorkingDirectory = "NO"
+      ignoresPersistentStateOnLaunch = "NO"
+      debugDocumentVersioning = "YES"
+      debugServiceExtension = "internal"
+      allowLocationSimulation = "YES">
+      <BuildableProductRunnable
+         runnableDebuggingMode = "0">
+         <BuildableReference
+            BuildableIdentifier = "primary"
+            BlueprintIdentifier = "13B07F861A680F5B00A75B9A"
+            BuildableName = "Arise.app"
+            BlueprintName = "Arise"
+            ReferencedContainer = "container:Arise.xcodeproj">
+         </BuildableReference>
+      </BuildableProductRunnable>
+   </LaunchAction>
+   <ProfileAction
+      buildConfiguration = "Release"
+      shouldUseLaunchSchemeArgsEnv = "YES"
+      savedToolIdentifier = ""
+      useCustomWorkingDirectory = "NO"
+      debugDocumentVersioning = "YES">
+      <BuildableProductRunnable
+         runnableDebuggingMode = "0">
+         <BuildableReference
+            BuildableIdentifier = "primary"
+            BlueprintIdentifier = "13B07F861A680F5B00A75B9A"
+            BuildableName = "Arise.app"
+            BlueprintName = "Arise"
+            ReferencedContainer = "container:Arise.xcodeproj">
+         </BuildableReference>
+      </BuildableProductRunnable>
+   </ProfileAction>
+   <AnalyzeAction
+      buildConfiguration = "Debug">
+   </AnalyzeAction>
+   <ArchiveAction
+      buildConfiguration = "Release"
+      revealArchiveInOrganizer = "YES">
+   </ArchiveAction>
+</Scheme>

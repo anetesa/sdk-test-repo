@@ -1,0 +1,556 @@
+name: Build and Release iOS SDK
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'ios-sdk/**'
+      - '.github/workflows/ios-sdk-release.yml'
+  workflow_dispatch:
+
+jobs:
+  build-and-release:
+    # Use macos-26 for access to Xcode with Swift 6.2.1+ and newer iOS SDK
+    # CloudCommerce requires Swift 6.2.1+ and ProximityReader.StoreAndForwardStatus
+    runs-on: macos-26
+    timeout-minutes: 360
+    
+    steps:
+      - name: Checkout source repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Fetch all history for tags
+      
+      - name: Setup Xcode
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          # IMPORTANT: Use latest-stable to match local development environment (Swift 6.2.3)
+          # This ensures binary framework compatibility between CI and local builds
+          # If your local Xcode version differs, update this to match your local version
+          # CloudCommerce.xcframework requires Swift 6.2.1+ and newer iOS SDK for ProximityReader
+          xcode-version: latest-stable
+      
+      - name: Cache DerivedData and SourcePackages
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/Library/Developer/Xcode/DerivedData
+            ~/Library/Caches/org.swift.swiftpm
+          key: ${{ runner.os }}-xcode-${{ hashFiles('ios-sdk/src/AriseMobileSdk.xcodeproj/project.pbxproj', 'ios-sdk/Distribution/Package.swift') }}
+          restore-keys: |
+            ${{ runner.os }}-xcode-
+      
+      - name: Verify Swift and Xcode versions
+        run: |
+          echo "Xcode version:"
+          xcodebuild -version
+          echo ""
+          echo "Swift version:"
+          swift --version
+          echo ""
+          echo "Full Swift version details:"
+          xcrun swift --version
+          echo ""
+          echo "⚠️  NOTE: Using latest-stable Xcode to match local development environment"
+          echo "⚠️  If you encounter Swift version mismatch errors, ensure CI and local Xcode versions match"
+          echo "⚠️  CloudCommerce.xcframework requires Swift 6.2.1+ and newer iOS SDK for ProximityReader"
+          # #region agent log - CI Swift version capture
+          echo "=== CI SWIFT VERSION DEBUG ==="
+          echo "HYPOTHESIS: H1 - Swift toolchain version mismatch"
+          echo "XCODE_VERSION: $(xcodebuild -version)"
+          echo "SWIFT_VERSION: $(swift --version)"
+          echo "SWIFT_FULL: $(xcrun swift --version)"
+          echo "=============================="
+          # #endregion
+      
+      - name: Get version from Info.plist
+        id: get_version
+        run: |
+          VERSION=$(/usr/libexec/PlistBuddy -c "Print :CFBundleShortVersionString" ios-sdk/src/AriseMobileSdk/AriseMobileSdk-Info.plist)
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "tag=v$VERSION" >> $GITHUB_OUTPUT
+          echo "📦 Version: $VERSION"
+          echo "🏷️  Tag: v$VERSION"
+      
+      - name: Check if tag already exists
+        id: check_tag
+        run: |
+          TAG="${{ steps.get_version.outputs.tag }}"
+          if git rev-parse "$TAG" >/dev/null 2>&1; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+            echo "⚠️  Tag $TAG already exists, skipping release"
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+            echo "✅ Tag $TAG does not exist, proceeding with release"
+          fi
+      
+      - name: Check if only framework files changed
+        id: check_framework_only
+        if: steps.check_tag.outputs.exists == 'false'
+        run: |
+          # Get list of changed files in the commit
+          if [ "${{ github.event_name }}" == "push" ]; then
+            # For push events, compare with previous commit
+            CHANGED_FILES=$(git diff --name-only HEAD~1 HEAD 2>/dev/null || git diff --name-only origin/main HEAD 2>/dev/null || echo "")
+          else
+            # For workflow_dispatch, check what files exist
+            CHANGED_FILES=$(git ls-files ios-sdk/libs/AriseMobile.xcframework 2>/dev/null || echo "")
+          fi
+          
+          if [ -z "$CHANGED_FILES" ]; then
+            echo "framework_only=false" >> $GITHUB_OUTPUT
+            echo "build_needed=true" >> $GITHUB_OUTPUT
+            echo "📋 No changed files detected or workflow_dispatch - will build"
+            exit 0
+          fi
+          
+          echo "Changed files:"
+          echo "$CHANGED_FILES"
+          
+          # Check if only framework files changed (no source code changes)
+          FRAMEWORK_ONLY=true
+          BUILD_NEEDED=false
+          
+          # List of paths that indicate source code changes (require rebuild)
+          SOURCE_PATTERNS=(
+            "ios-sdk/src/"
+            "ios-sdk/Distribution/Sources/"
+            "ios-sdk/Distribution/Package.swift"
+            "*.swift"
+            "*.m"
+            "*.h"
+            "*.xcodeproj"
+            "*.pbxproj"
+            "build_framework"
+            "build_framework_ci"
+          )
+          
+          # Check each changed file
+          while IFS= read -r file; do
+            if [ -z "$file" ]; then
+              continue
+            fi
+            
+            # Skip if it's a framework file
+            if [[ "$file" == *"AriseMobile.xcframework"* ]] || \
+               [[ "$file" == *"CloudCommerce.xcframework"* ]] || \
+               [[ "$file" == *"ios-sdk/libs/"* ]] && [[ "$file" != *"build_framework"* ]]; then
+              echo "  ✅ Framework file: $file (skip)"
+              continue
+            fi
+            
+            # Check if it matches source code patterns
+            IS_SOURCE=false
+            for pattern in "${SOURCE_PATTERNS[@]}"; do
+              if [[ "$file" == *"$pattern"* ]]; then
+                IS_SOURCE=true
+                break
+              fi
+            done
+            
+            if [ "$IS_SOURCE" = true ]; then
+              echo "  🔨 Source code file: $file (requires build)"
+              FRAMEWORK_ONLY=false
+              BUILD_NEEDED=true
+              break
+            else
+              echo "  📄 Other file: $file"
+            fi
+          done <<< "$CHANGED_FILES"
+          
+          echo "framework_only=$FRAMEWORK_ONLY" >> $GITHUB_OUTPUT
+          echo "build_needed=$BUILD_NEEDED" >> $GITHUB_OUTPUT
+          
+          if [ "$FRAMEWORK_ONLY" = true ]; then
+            echo "✅ Only framework files changed - will use existing framework"
+          else
+            echo "🔨 Source code changed - will build new framework"
+          fi
+      
+      - name: Verify existing framework exists
+        id: verify_framework
+        if: steps.check_tag.outputs.exists == 'false' && steps.check_framework_only.outputs.framework_only == 'true'
+        run: |
+          FRAMEWORK_PATH="ios-sdk/libs/AriseMobile.xcframework"
+          
+          if [ -d "$FRAMEWORK_PATH" ]; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+            echo "✅ Existing framework found at: $FRAMEWORK_PATH"
+            
+            # Verify framework structure
+            if [ -f "$FRAMEWORK_PATH/Info.plist" ]; then
+              echo "✅ Framework Info.plist found"
+            else
+              echo "⚠️  Warning: Framework Info.plist not found"
+            fi
+            
+            # Check for device and simulator slices
+            DEVICE_FW=$(find "$FRAMEWORK_PATH" -path "*/ios-arm64/*.framework" -type d | head -1)
+            SIM_FW=$(find "$FRAMEWORK_PATH" -path "*simulator/*.framework" -type d | head -1)
+            
+            if [ -n "$DEVICE_FW" ]; then
+              echo "✅ Device framework found: $DEVICE_FW"
+            else
+              echo "⚠️  Warning: Device framework not found"
+            fi
+            
+            if [ -n "$SIM_FW" ]; then
+              echo "✅ Simulator framework found: $SIM_FW"
+            else
+              echo "⚠️  Warning: Simulator framework not found (device-only is OK)"
+            fi
+            
+            # Show framework size
+            FRAMEWORK_SIZE=$(du -sh "$FRAMEWORK_PATH" 2>/dev/null | cut -f1)
+            echo "Framework size: $FRAMEWORK_SIZE"
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+            echo "❌ Framework not found at: $FRAMEWORK_PATH"
+            echo "Will fall back to building"
+          fi
+      
+      - name: Log Swift Version Before Build
+        if: steps.check_tag.outputs.exists == 'false'
+        run: |
+          echo "Swift version at build time:"
+          xcrun swift --version
+          echo ""
+          echo "Swift compiler path:"
+          which swift
+          xcrun --find swift
+          # #region agent log - Pre-build Swift version
+          echo "=== PRE-BUILD SWIFT VERSION DEBUG ==="
+          echo "HYPOTHESIS: H1 - Swift toolchain version mismatch"
+          echo "SWIFT_VERSION_BUILD: $(xcrun swift --version)"
+          echo "SWIFT_PATH: $(xcrun --find swift)"
+          echo "====================================="
+          # #endregion
+
+      - name: Build XCFramework
+        if: steps.check_tag.outputs.exists == 'false' && (steps.check_framework_only.outputs.build_needed == 'true' || (steps.check_framework_only.outputs.framework_only == 'true' && steps.verify_framework.outputs.exists != 'true'))
+        run: |
+          echo "🔨 Building new framework..."
+          cd ios-sdk/libs
+          chmod +x build_framework_ci.sh
+          bash build_framework_ci.sh
+          ls -lh AriseMobile.xcframework
+      
+      - name: Use existing framework
+        if: steps.check_tag.outputs.exists == 'false' && steps.check_framework_only.outputs.framework_only == 'true' && steps.verify_framework.outputs.exists == 'true'
+        run: |
+          echo "✅ Using existing framework from commit"
+          echo "Framework location: ios-sdk/libs/AriseMobile.xcframework"
+          ls -lh ios-sdk/libs/AriseMobile.xcframework
+          
+          # Verify framework is valid
+          if [ ! -f "ios-sdk/libs/AriseMobile.xcframework/Info.plist" ]; then
+            echo "❌ Error: Framework Info.plist not found"
+            exit 1
+          fi
+          
+          echo "✅ Existing framework verified and ready to use"
+          # #region agent log - Framework status
+          echo "=== FRAMEWORK STATUS ==="
+          echo "Framework exists: true"
+          echo "Source: existing framework from commit"
+          find ios-sdk/libs/AriseMobile.xcframework -name "*.swiftinterface" -exec echo "Interface file: {}" \; -exec head -1 {} \; 2>/dev/null || echo "No swiftinterface files found"
+          echo "======================="
+          # #endregion
+
+      - name: Extract and Upload SwiftInterface Files
+        if: steps.check_tag.outputs.exists == 'false'
+        uses: actions/upload-artifact@v4
+        with:
+          name: swiftinterface-files
+          path: |
+            ios-sdk/libs/AriseMobile.xcframework/**/*.swiftinterface
+            ios-sdk/libs/AriseMobile.xcframework/**/module.modulemap
+          retention-days: 7
+          if-no-files-found: warn
+      
+      - name: Detect Module Name from Project Settings
+        if: steps.check_tag.outputs.exists == 'false'
+        id: detect_module_name
+        run: |
+          # Get module name from project settings (this is the source of truth before build)
+          MODULE_NAME=""
+          
+          # Check PRODUCT_MODULE_NAME from project settings (most reliable - this is what will be used in build)
+          if [ -f "ios-sdk/src/AriseMobileSdk.xcodeproj/project.pbxproj" ]; then
+            MODULE_NAME=$(grep "PRODUCT_MODULE_NAME" ios-sdk/src/AriseMobileSdk.xcodeproj/project.pbxproj | head -1 | sed -E 's/.*PRODUCT_MODULE_NAME[[:space:]]*=[[:space:]]*([^;]+);.*/\1/' | xargs)
+            echo "Found module name in project.pbxproj: $MODULE_NAME"
+          fi
+          
+          # Verify using xcodebuild showBuildSettings
+          if [ -n "$MODULE_NAME" ] && [ "$MODULE_NAME" != "" ]; then
+            VERIFIED=$(xcodebuild -showBuildSettings -project ios-sdk/src/AriseMobileSdk.xcodeproj -scheme AriseMobileSdk -configuration Debug -sdk iphoneos 2>/dev/null | grep "PRODUCT_MODULE_NAME" | head -1 | sed -E 's/.*PRODUCT_MODULE_NAME[[:space:]]*=[[:space:]]*(.+)/\1/' | xargs)
+            if [ -n "$VERIFIED" ] && [ "$VERIFIED" != "$MODULE_NAME" ]; then
+              echo "⚠️  Warning: project.pbxproj says $MODULE_NAME but xcodebuild shows $VERIFIED"
+              MODULE_NAME="$VERIFIED"
+            fi
+          fi
+          
+          # Final fallback: default to AriseMobile (expected value)
+          if [ -z "$MODULE_NAME" ] || [ "$MODULE_NAME" = "" ]; then
+            MODULE_NAME="AriseMobile"
+            echo "Using default module name: $MODULE_NAME"
+          fi
+          
+          echo "module_name=$MODULE_NAME" >> $GITHUB_OUTPUT
+          echo "✅ Detected module name: $MODULE_NAME"
+          # #region agent log - Module name detection
+          echo "=== MODULE NAME DETECTION ==="
+          echo "HYPOTHESIS: H2 - Module name must match binary target name"
+          echo "DETECTED_MODULE_NAME: $MODULE_NAME"
+          echo "SOURCE: project.pbxproj and xcodebuild showBuildSettings"
+          echo "=============================="
+          # #endregion
+
+      - name: Update Package.swift and Wrapper with Correct Module Name
+        if: steps.check_tag.outputs.exists == 'false'
+        run: |
+          MODULE_NAME="${{ steps.detect_module_name.outputs.module_name }}"
+          echo "Updating Package.swift and wrapper to use module name: $MODULE_NAME"
+          
+          # Update Package.swift using Python for cross-platform compatibility
+          python3 << EOF
+          import re
+          
+          module_name = "$MODULE_NAME"
+          
+          # Update Package.swift
+          with open('ios-sdk/Distribution/Package.swift', 'r') as f:
+              content = f.read()
+          
+          # Set package name to AriseMobileSdkIos (to avoid conflicts with module/class names)
+          content = re.sub(r'name: "AriseMobileSdk"', 'name: "AriseMobileSdkIos"', content, count=1)
+          
+          # Set library product name to AriseMobileSdkIos (what users import)
+          content = re.sub(r'\.library\(\s*name: "AriseMobileSDK"', '.library(\n            name: "AriseMobileSdkIos"', content)
+          
+          # Binary target name must match module name inside framework (AriseMobile)
+          # Don't change binary target name - only update references if needed
+          # Keep binary target as: name: "{module_name}" (should be AriseMobile)
+          
+          with open('ios-sdk/Distribution/Package.swift', 'w') as f:
+              f.write(content)
+          
+          # Update wrapper
+          wrapper_path = 'ios-sdk/Distribution/Sources/AriseMobileSdkIos/AriseMobileSdk.swift'
+          with open(wrapper_path, 'r') as f:
+              content = f.read()
+          
+          # Replace import statements
+          content = re.sub(r'@_exported import AriseMobileSDK', f'@_exported import {module_name}', content)
+          content = re.sub(r'@_exported import AriseMobileSdk', f'@_exported import {module_name}', content)
+          
+          with open(wrapper_path, 'w') as f:
+              f.write(content)
+          
+          print(f"✅ Updated files to use module name: {module_name}")
+          EOF
+          
+          echo "Verifying changes:"
+          echo "Package.swift binary target:"
+          grep -E "binaryTarget|name:" ios-sdk/Distribution/Package.swift | head -5
+          echo "Wrapper import:"
+          grep "@_exported import" ios-sdk/Distribution/Sources/AriseMobileSdkIos/AriseMobileSdk.swift | head -1
+          # #region agent log - Package.swift update
+          echo "=== PACKAGE.SWIFT UPDATE ==="
+          echo "UPDATED_MODULE_NAME: $MODULE_NAME"
+          echo "============================="
+          # #endregion
+
+      - name: Copy frameworks to distribution package
+        if: steps.check_tag.outputs.exists == 'false'
+        run: |
+          # Ensure libs directory exists in distribution package
+          mkdir -p ios-sdk/Distribution/libs
+          
+          # Copy AriseMobile.xcframework (either from build or existing)
+          rm -rf ios-sdk/Distribution/libs/AriseMobile.xcframework
+          
+          if [ -d "ios-sdk/libs/AriseMobile.xcframework" ]; then
+          cp -R ios-sdk/libs/AriseMobile.xcframework ios-sdk/Distribution/libs/
+            echo "✅ Framework copied to distribution package"
+          else
+            echo "❌ Error: Framework not found at ios-sdk/libs/AriseMobile.xcframework"
+            exit 1
+          fi
+          
+          # Copy CloudCommerce.xcframework if it exists
+          if [ -d "ios-sdk/libs/CloudCommerce.xcframework" ]; then
+            rm -rf ios-sdk/Distribution/libs/CloudCommerce.xcframework
+            cp -R ios-sdk/libs/CloudCommerce.xcframework ios-sdk/Distribution/libs/
+          fi
+          
+          echo "✅ Frameworks copied to distribution package"
+          ls -lh ios-sdk/Distribution/libs/
+          echo ""
+          echo "Checking Swift version in swiftinterface files:"
+          find ios-sdk/Distribution/libs -name "*.swiftinterface" -type f -exec head -1 {} \; | head -5
+          # #region agent log - SwiftInterface version check
+          echo "=== SWIFTINTERFACE VERSION CHECK ==="
+          echo "HYPOTHESIS: H1 - Swift toolchain version mismatch"
+          echo "INTERFACE_VERSIONS:"
+          find ios-sdk/Distribution/libs -name "*.swiftinterface" -type f -exec echo "File: {}" \; -exec head -1 {} \; | head -10
+          echo "===================================="
+          # #endregion
+      
+      - name: Create archive with frameworks
+        if: steps.check_tag.outputs.exists == 'false'
+        run: |
+          cd ios-sdk/Distribution
+          zip -r AriseMobile-v${{ steps.get_version.outputs.version }}-xcframeworks.zip libs/
+          ls -lh AriseMobile-v${{ steps.get_version.outputs.version }}-xcframeworks.zip
+          echo "archive_path=ios-sdk/Distribution/AriseMobile-v${{ steps.get_version.outputs.version }}-xcframeworks.zip" >> $GITHUB_ENV
+      
+      - name: Upload xcframework artifact for deployment
+        if: steps.check_tag.outputs.exists == 'false'
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-sdk-xcframework
+          path: |
+            ios-sdk/Distribution/AriseMobile-v${{ steps.get_version.outputs.version }}-xcframeworks.zip
+            ios-sdk/Distribution/libs/
+          retention-days: 90
+          if-no-files-found: error
+      
+      - name: Setup distribution repository
+        if: steps.check_tag.outputs.exists == 'false'
+        run: |
+          REPO_URL="https://x-access-token:${{ secrets.DISTRIBUTION_REPO_TOKEN }}@github.com/${{ secrets.DISTRIBUTION_REPO }}.git"
+          mkdir -p distribution-repo
+          cd distribution-repo
+          
+          # Try to clone the repository
+          if git clone --depth=1 "$REPO_URL" . 2>/dev/null; then
+            echo "✅ Repository cloned successfully"
+            # Fetch all branches
+            git fetch --unshallow 2>/dev/null || git fetch origin
+            # Check if main branch exists remotely
+            if git ls-remote --heads origin main | grep -q main; then
+              echo "Main branch exists, checking out..."
+              git checkout main || git checkout -b main origin/main
+            else
+              # Try to determine default branch
+              DEFAULT_BRANCH=$(git remote show origin | grep 'HEAD branch' | awk '{print $NF}' || echo "main")
+              echo "Main branch doesn't exist, checking out default branch: $DEFAULT_BRANCH"
+              if [ "$DEFAULT_BRANCH" != "main" ] && git ls-remote --heads origin "$DEFAULT_BRANCH" | grep -q "$DEFAULT_BRANCH"; then
+                git checkout "$DEFAULT_BRANCH" || git checkout -b main
+              else
+                git checkout -b main
+              fi
+            fi
+          else
+            echo "⚠️ Repository is empty, initializing..."
+            git init
+            git remote add origin "$REPO_URL" || git remote set-url origin "$REPO_URL"
+            git checkout -b main
+            echo "# AriseMobileSdk Distribution Repository" > README.md
+            git add README.md
+            git -c user.name="github-actions[bot]" -c user.email="github-actions[bot]@users.noreply.github.com" commit -m "Initial commit" || true
+          fi
+      
+      - name: Configure git for distribution repo
+        if: steps.check_tag.outputs.exists == 'false'
+        working-directory: distribution-repo
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+      
+      - name: Copy files to distribution repository
+        if: steps.check_tag.outputs.exists == 'false'
+        run: |
+          # Copy Package.swift and other necessary files
+          cp ios-sdk/Distribution/Package.swift distribution-repo/
+          cp ios-sdk/Distribution/README.md distribution-repo/ 2>/dev/null || true
+          
+          # Copy Sources directory
+          mkdir -p distribution-repo/Sources/AriseMobileSdkIos
+          cp -R ios-sdk/Distribution/Sources/AriseMobileSdkIos/* distribution-repo/Sources/AriseMobileSdkIos/
+          
+          # Copy libs directory
+          mkdir -p distribution-repo/libs
+          cp -R ios-sdk/Distribution/libs/* distribution-repo/libs/
+          
+          echo "✅ Files copied to distribution repository"
+      
+      - name: Commit and push to distribution repository
+        if: steps.check_tag.outputs.exists == 'false'
+        working-directory: distribution-repo
+        run: |
+          # Ensure we're on main branch
+          git checkout main || git checkout -b main
+          git add .
+          if git diff --staged --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "Release version ${{ steps.get_version.outputs.version }}"
+            # Push with set-upstream if branch doesn't exist remotely
+            git push -u origin main || git push origin main
+            echo "✅ Changes pushed to distribution repository"
+          fi
+      
+      - name: Check if tag exists in distribution repository
+        if: steps.check_tag.outputs.exists == 'false'
+        id: check_dist_tag
+        working-directory: distribution-repo
+        run: |
+          TAG="${{ steps.get_version.outputs.tag }}"
+          if git rev-parse "$TAG" >/dev/null 2>&1; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+            echo "⚠️  Tag $TAG already exists in distribution repository, skipping tag creation"
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+            echo "✅ Tag $TAG does not exist in distribution repository, will create it"
+          fi
+      
+      - name: Create git tag
+        if: steps.check_tag.outputs.exists == 'false' && steps.check_dist_tag.outputs.exists == 'false'
+        working-directory: distribution-repo
+        run: |
+          TAG="${{ steps.get_version.outputs.tag }}"
+          git tag -a "$TAG" -m "Release $TAG"
+          git push origin "$TAG"
+          echo "✅ Tag $TAG created and pushed"
+      
+      - name: Create GitHub Release
+        if: steps.check_tag.outputs.exists == 'false' && steps.check_dist_tag.outputs.exists == 'false'
+        uses: softprops/action-gh-release@v1
+        with:
+          repository: ${{ secrets.DISTRIBUTION_REPO }}
+          token: ${{ secrets.DISTRIBUTION_REPO_TOKEN }}
+          tag_name: ${{ steps.get_version.outputs.tag }}
+          name: AriseMobileSdk ${{ steps.get_version.outputs.tag }}
+          body: |
+            ## 🚀 AriseMobileSdk ${{ steps.get_version.outputs.tag }}
+            
+            ### 📦 What's New
+            
+            Automatic release triggered by changes in ios-sdk/ directory.
+            
+            ### 📋 Technical Details
+            
+            - **Minimum iOS version:** 15.0
+            - **Minimum Xcode version:** 15.0
+            - **Minimum Swift version:** 5.9
+            
+            ### 📥 Installation
+            
+            ```swift
+            dependencies: [
+                .package(
+                    url: "https://github.com/${{ secrets.DISTRIBUTION_REPO }}.git",
+                    from: "${{ steps.get_version.outputs.version }}"
+                )
+            ]
+            ```
+            
+            ---
+            
+            *This release was automatically created. To deploy a previously built artifact, use the "Deploy iOS SDK Release" workflow.*
+          files: |
+            ios-sdk/Distribution/AriseMobile-v${{ steps.get_version.outputs.version }}-xcframeworks.zip
+          draft: false
+          prerelease: false

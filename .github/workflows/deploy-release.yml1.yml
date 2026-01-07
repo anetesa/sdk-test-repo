@@ -1,0 +1,190 @@
+name: Deploy iOS SDK Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Release version (e.g., 1.0.1)'
+        required: true
+        type: string
+      release_notes:
+        description: 'Release notes (leave empty for auto-generation from git log)'
+        required: false
+        type: string
+      artifact_source:
+        description: 'Where to get artifact from'
+        required: true
+        type: choice
+        options:
+          - 'build_workflow'
+          - 'github_release'
+        default: 'build_workflow'
+      build_run_id:
+        description: 'Build workflow run ID (if artifact_source is build_workflow)'
+        required: false
+        type: string
+
+jobs:
+  deploy:
+    runs-on: macos-latest
+    timeout-minutes: 30
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Need full history for release notes generation
+
+      - name: Download artifact from build workflow
+        if: inputs.artifact_source == 'build_workflow'
+        uses: actions/download-artifact@v4
+        with:
+          name: ios-sdk-xcframework
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          run-id: ${{ inputs.build_run_id }}
+          path: ./artifacts
+
+      - name: Download artifact from GitHub Release
+        if: inputs.artifact_source == 'github_release'
+        run: |
+          # Install gh CLI if not available
+          if ! command -v gh &> /dev/null; then
+            echo "Installing gh CLI..."
+            brew install gh || echo "gh CLI installation failed, trying alternative method"
+          fi
+          
+          # Authenticate
+          echo "${{ secrets.GITHUB_TOKEN }}" | gh auth login --with-token
+          
+          # Download release assets
+          TAG="v${{ inputs.version }}"
+          echo "Downloading artifacts from release $TAG..."
+          
+          mkdir -p ./artifacts
+          gh release download "$TAG" \
+            --repo ${{ secrets.DISTRIBUTION_REPO }} \
+            --pattern "*.zip" \
+            --dir ./artifacts || {
+              echo "Failed to download from release, trying to find in current repo..."
+              # Try downloading from current repo if distribution repo doesn't have it
+              gh release download "$TAG" \
+                --pattern "*.zip" \
+                --dir ./artifacts || true
+            }
+          
+          ls -lh ./artifacts/ || echo "No artifacts downloaded"
+
+      - name: Verify artifact exists
+        run: |
+          if [ ! -d "./artifacts" ] || [ -z "$(ls -A ./artifacts 2>/dev/null)" ]; then
+            echo "❌ Error: No artifacts found!"
+            echo "Available artifacts:"
+            ls -la ./artifacts/ 2>/dev/null || echo "artifacts directory does not exist"
+            exit 1
+          fi
+          echo "✅ Artifacts found:"
+          ls -lh ./artifacts/
+
+      - name: Generate release notes
+        id: release_notes
+        run: |
+          if [ -n "${{ inputs.release_notes }}" ]; then
+            # Use manually provided release notes
+            NOTES="${{ inputs.release_notes }}"
+            echo "Using manually provided release notes"
+          else
+            # Auto-generate from git log
+            TAG="v${{ inputs.version }}"
+            PREV_TAG=$(git describe --tags --abbrev=0 --exclude="$TAG" 2>/dev/null || echo "")
+            
+            if [ -z "$PREV_TAG" ]; then
+              # No previous tag found, generate initial release notes
+              NOTES="## 🚀 AriseMobileSdk $TAG\n\n### 📦 Initial Release\n\nFirst release of AriseMobileSdk.\n\n### 📋 Technical Details\n\n- **Minimum iOS version:** 15.0\n- **Minimum Xcode version:** 15.0\n- **Minimum Swift version:** 5.9"
+            else
+              # Generate notes from git log between tags
+              NOTES="## 🚀 AriseMobileSdk $TAG\n\n### 📦 What's New\n\nChanges since $PREV_TAG:\n\n"
+              
+              # Get commits between tags
+              COMMITS=$(git log ${PREV_TAG}..HEAD --pretty=format:"- %s (%h)" --no-merges 2>/dev/null || echo "")
+              
+              if [ -z "$COMMITS" ]; then
+                NOTES+="No commits found between $PREV_TAG and HEAD.\n"
+              else
+                NOTES+="$COMMITS\n"
+              fi
+              
+              NOTES+="\n### 📋 Technical Details\n\n- **Minimum iOS version:** 15.0\n- **Minimum Xcode version:** 15.0\n- **Minimum Swift version:** 5.9"
+            fi
+          fi
+          
+          # Escape for GitHub Actions output
+          NOTES_ESCAPED=$(echo "$NOTES" | sed 's/%/%25/g' | sed 's/\n/%0A/g')
+          echo "notes<<EOF" >> $GITHUB_OUTPUT
+          echo -e "$NOTES" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+          
+          echo "Generated release notes:"
+          echo -e "$NOTES"
+
+      - name: Checkout distribution repository
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ secrets.DISTRIBUTION_REPO }}
+          token: ${{ secrets.DISTRIBUTION_REPO_TOKEN }}
+          path: distribution-repo
+          fetch-depth: 0
+
+      - name: Configure git for distribution repo
+        working-directory: distribution-repo
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Check if tag already exists
+        id: check_tag
+        working-directory: distribution-repo
+        run: |
+          TAG="v${{ inputs.version }}"
+          if git rev-parse "$TAG" >/dev/null 2>&1; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+            echo "⚠️  Tag $TAG already exists in distribution repository"
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+            echo "✅ Tag $TAG does not exist, proceeding with release"
+          fi
+
+      - name: Create git tag
+        if: steps.check_tag.outputs.exists == 'false'
+        working-directory: distribution-repo
+        run: |
+          TAG="v${{ inputs.version }}"
+          git tag -a "$TAG" -m "Release $TAG"
+          git push origin "$TAG"
+          echo "✅ Tag $TAG created and pushed"
+
+      - name: Create GitHub Release
+        if: steps.check_tag.outputs.exists == 'false'
+        uses: softprops/action-gh-release@v1
+        with:
+          repository: ${{ secrets.DISTRIBUTION_REPO }}
+          token: ${{ secrets.DISTRIBUTION_REPO_TOKEN }}
+          tag_name: v${{ inputs.version }}
+          name: AriseMobileSdk v${{ inputs.version }}
+          body: ${{ steps.release_notes.outputs.notes }}
+          files: ./artifacts/*
+          draft: false
+          prerelease: false
+
+      - name: Summary
+        if: always()
+        run: |
+          echo "## Deployment Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Version:** ${{ inputs.version }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Artifact Source:** ${{ inputs.artifact_source }}" >> $GITHUB_STEP_SUMMARY
+          if [ "${{ steps.check_tag.outputs.exists }}" == "true" ]; then
+            echo "- **Status:** ⚠️ Tag already exists, release was skipped" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "- **Status:** ✅ Release created successfully" >> $GITHUB_STEP_SUMMARY
+          fi
+

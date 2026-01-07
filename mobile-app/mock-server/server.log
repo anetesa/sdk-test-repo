@@ -1,0 +1,8 @@
+Mock server running on http://localhost:3001
+Transactions endpoint: http://localhost:3001/api/transactions
+Mock server: GET /api/transactions
+Query parameters: {}
+Mock server: GET /api/transactions
+Query parameters: { page: '0', pageSize: '4', orderBy: '', asc: 'false' }
+Mock server: GET /api/transactions
+Query parameters: { page: '0', pageSize: '20', orderBy: '', asc: 'false' }

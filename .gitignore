@@ -1,0 +1,7 @@
+
+# Test results
+DerivedData-Tests/
+DerivedData-Tests-Local/
+test-results*.xcresult
+test-results-local.xcresult
+*.xcresult

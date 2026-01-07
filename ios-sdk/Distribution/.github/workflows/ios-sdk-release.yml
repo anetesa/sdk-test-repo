@@ -1,0 +1,194 @@
+name: Build and Release iOS SDK
+
+on:
+  push:
+    branches: [main]
+    paths:
+      # Trigger only when files in ios-sdk/ directory are changed
+      - 'ios-sdk/**'
+      - '.github/workflows/ios-sdk-release.yml'
+  workflow_dispatch:  # Allow manual trigger
+
+jobs:
+  build-and-release:
+    runs-on: macos-14
+    timeout-minutes: 60
+    
+    steps:
+      - name: Checkout source repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Fetch all history for tags
+      
+      - name: Setup Xcode
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: latest-stable
+      
+      - name: Get version from Info.plist
+        id: get_version
+        run: |
+          VERSION=$(/usr/libexec/PlistBuddy -c "Print :CFBundleShortVersionString" ios-sdk/src/AriseMobileSdk/AriseMobileSdk-Info.plist)
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "tag=v$VERSION" >> $GITHUB_OUTPUT
+          echo "📦 Version: $VERSION"
+          echo "🏷️  Tag: v$VERSION"
+      
+      - name: Check if tag already exists
+        id: check_tag
+        run: |
+          TAG="${{ steps.get_version.outputs.tag }}"
+          if git rev-parse "$TAG" >/dev/null 2>&1; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+            echo "⚠️  Tag $TAG already exists, skipping release"
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+            echo "✅ Tag $TAG does not exist, proceeding with release"
+          fi
+      
+      - name: Build XCFramework
+        if: steps.check_tag.outputs.exists == 'false'
+        run: |
+          cd ios-sdk/libs
+          chmod +x build_framework.sh
+          bash build_framework.sh
+          ls -lh AriseMobileSdk.xcframework
+      
+      - name: Copy frameworks to distribution package
+        if: steps.check_tag.outputs.exists == 'false'
+        run: |
+          # Ensure libs directory exists in distribution package
+          mkdir -p ios-sdk/Distribution/libs
+          
+          # Copy AriseMobileSdk.xcframework
+          rm -rf ios-sdk/Distribution/libs/AriseMobileSdk.xcframework
+          cp -R ios-sdk/libs/AriseMobileSdk.xcframework ios-sdk/Distribution/libs/
+          
+          # Copy CloudCommerce.xcframework if it exists
+          if [ -d "ios-sdk/libs/CloudCommerce.xcframework" ]; then
+            rm -rf ios-sdk/Distribution/libs/CloudCommerce.xcframework
+            cp -R ios-sdk/libs/CloudCommerce.xcframework ios-sdk/Distribution/libs/
+          fi
+          
+          echo "✅ Frameworks copied to distribution package"
+          ls -lh ios-sdk/Distribution/libs/
+      
+      - name: Create archive with frameworks
+        if: steps.check_tag.outputs.exists == 'false'
+        run: |
+          cd ios-sdk/Distribution
+          zip -r AriseMobileSdk-v${{ steps.get_version.outputs.version }}-xcframeworks.zip libs/
+          ls -lh AriseMobileSdk-v${{ steps.get_version.outputs.version }}-xcframeworks.zip
+          echo "archive_path=ios-sdk/Distribution/AriseMobileSdk-v${{ steps.get_version.outputs.version }}-xcframeworks.zip" >> $GITHUB_ENV
+      
+      - name: Checkout distribution repository
+        if: steps.check_tag.outputs.exists == 'false'
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ secrets.DISTRIBUTION_REPO }}
+          token: ${{ secrets.DISTRIBUTION_REPO_TOKEN }}
+          path: distribution-repo
+          fetch-depth: 0
+      
+      - name: Configure git for distribution repo
+        if: steps.check_tag.outputs.exists == 'false'
+        working-directory: distribution-repo
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+      
+      - name: Copy files to distribution repository
+        if: steps.check_tag.outputs.exists == 'false'
+        run: |
+          # Copy Package.swift and other necessary files
+          cp ios-sdk/Distribution/Package.swift distribution-repo/
+          cp ios-sdk/Distribution/README.md distribution-repo/ 2>/dev/null || true
+          
+          # Copy Sources directory
+          mkdir -p distribution-repo/Sources/AriseMobileSdkIos
+          cp -R ios-sdk/Distribution/Sources/AriseMobileSdkIos/* distribution-repo/Sources/AriseMobileSdkIos/
+          
+          # Copy libs directory
+          mkdir -p distribution-repo/libs
+          cp -R ios-sdk/Distribution/libs/* distribution-repo/libs/
+          
+          echo "✅ Files copied to distribution repository"
+      
+      - name: Verify files before commit
+        if: steps.check_tag.outputs.exists == 'false'
+        working-directory: distribution-repo
+        run: |
+          echo "📋 Verifying files in distribution repository..."
+          echo "Package.swift exists: $([ -f Package.swift ] && echo 'yes' || echo 'no')"
+          echo "libs directory exists: $([ -d libs ] && echo 'yes' || echo 'no')"
+          if [ -d libs ]; then
+            echo "Contents of libs/:"
+            ls -lh libs/
+            echo "AriseMobileSdk.xcframework exists: $([ -d libs/AriseMobileSdk.xcframework ] && echo 'yes' || echo 'no')"
+            echo "CloudCommerce.xcframework exists: $([ -d libs/CloudCommerce.xcframework ] && echo 'yes' || echo 'no')"
+          fi
+          echo "Sources directory exists: $([ -d Sources ] && echo 'yes' || echo 'no')"
+          if [ -d Sources ]; then
+            echo "Contents of Sources/:"
+            ls -lh Sources/
+          fi
+      
+      - name: Commit and push to distribution repository
+        if: steps.check_tag.outputs.exists == 'false'
+        working-directory: distribution-repo
+        run: |
+          # Force add all files including large binaries
+          git add -f .
+          # Check if there are any changes
+          if git diff --staged --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "Release version ${{ steps.get_version.outputs.version }}"
+            git push origin main
+            echo "✅ Changes pushed to distribution repository"
+          fi
+      
+      - name: Create git tag
+        if: steps.check_tag.outputs.exists == 'false'
+        working-directory: distribution-repo
+        run: |
+          TAG="${{ steps.get_version.outputs.tag }}"
+          git tag -a "$TAG" -m "Release $TAG"
+          git push origin "$TAG"
+          echo "✅ Tag $TAG created and pushed"
+      
+      - name: Create GitHub Release
+        if: steps.check_tag.outputs.exists == 'false'
+        uses: softprops/action-gh-release@v1
+        with:
+          repository: ${{ secrets.DISTRIBUTION_REPO }}
+          token: ${{ secrets.DISTRIBUTION_REPO_TOKEN }}
+          tag_name: ${{ steps.get_version.outputs.tag }}
+          name: AriseMobileSdk ${{ steps.get_version.outputs.tag }}
+          body: |
+            ## 🚀 AriseMobileSdk ${{ steps.get_version.outputs.tag }}
+            
+            ### 📦 Что нового
+            
+            Автоматический релиз после мержа в main (только для изменений в ios-sdk/).
+            
+            ### 📋 Технические детали
+            
+            - **Минимальная версия iOS:** 15.0
+            - **Минимальная версия Xcode:** 15.0
+            - **Минимальная версия Swift:** 5.9
+            
+            ### 📥 Установка
+            
+            ```swift
+            dependencies: [
+                .package(
+                    url: "https://github.com/${{ secrets.DISTRIBUTION_REPO }}.git",
+                    from: "${{ steps.get_version.outputs.version }}"
+                )
+            ]
+            ```
+          files: |
+            ios-sdk/Distribution/AriseMobileSdk-v${{ steps.get_version.outputs.version }}-xcframeworks.zip
+          draft: false
+          prerelease: false

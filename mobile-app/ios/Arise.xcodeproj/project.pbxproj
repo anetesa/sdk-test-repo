@@ -1,0 +1,939 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 54;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		00E356F31AD99517003FC87E /* AriseTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 00E356F21AD99517003FC87E /* AriseTests.m */; };
+		13B07FBC1A68108700A75B9A /* AppDelegate.mm in Sources */ = {isa = PBXBuildFile; fileRef = 13B07FB01A68108700A75B9A /* AppDelegate.mm */; };
+		13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB51A68108700A75B9A /* Images.xcassets */; };
+		13B07FC11A68108700A75B9A /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 13B07FB71A68108700A75B9A /* main.m */; };
+		1410C97C2EB974AA0075671D /* AtlantisManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1410C97A2EB974AA0075671D /* AtlantisManager.swift */; };
+		1410C97D2EB974AA0075671D /* AtlantisManagerBridge.m in Sources */ = {isa = PBXBuildFile; fileRef = 1410C97B2EB974AA0075671D /* AtlantisManagerBridge.m */; };
+		14E4550B2ECE3DB9006394BA /* AriseMobileSdk.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = 14E4550A2ECE3DB9006394BA /* AriseMobileSdk.xcframework */; };
+		14E4550C2ECE3DB9006394BA /* AriseMobileSdk.xcframework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 14E4550A2ECE3DB9006394BA /* AriseMobileSdk.xcframework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		14FD46152ECF3F7700896EB9 /* OpenAPIURLSession in Frameworks */ = {isa = PBXBuildFile; productRef = 14FD46142ECF3F7700896EB9 /* OpenAPIURLSession */; };
+		14FD46172ECF3FBF00896EB9 /* X509 in Frameworks */ = {isa = PBXBuildFile; productRef = 14FD46162ECF3FBF00896EB9 /* X509 */; };
+		14FD46192ECF3FE900896EB9 /* CryptoSwift in Frameworks */ = {isa = PBXBuildFile; productRef = 14FD46182ECF3FE900896EB9 /* CryptoSwift */; };
+		20E532B4967A4CC715FC90E9 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 09A36B6FD498FF8940C6EBF5 /* PrivacyInfo.xcprivacy */; };
+		63E0A1022F0DAABC00A0B111 /* AriseMobileSdkModule.swift in Sources */ = {isa = PBXBuildFile; fileRef = 63E0A1002F0DAABC00A0B111 /* AriseMobileSdkModule.swift */; };
+		63E0A1032F0DAABC00A0B111 /* AriseMobileSdkBridge.m in Sources */ = {isa = PBXBuildFile; fileRef = 63E0A1012F0DAABC00A0B111 /* AriseMobileSdkBridge.m */; };
+		807EB33D9C5455D810B65F3B /* libPods-Arise.a in Frameworks */ = {isa = PBXBuildFile; fileRef = B6DE3B5FEDE1C1DADDD61FEB /* libPods-Arise.a */; };
+		81AB9BB82411601600AC10FF /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */; };
+		CF560DC8C58315F2417FFD8E /* libPods-Arise-AriseTests.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 5F3DDB70AE381D24CBF91898 /* libPods-Arise-AriseTests.a */; };
+		DC5E408E2ED89CF000D3F420 /* CloudCommerce.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = DCB3F0B32E14F3760031EEBF /* CloudCommerce.xcframework */; };
+		DC5E408F2ED89CF000D3F420 /* CloudCommerce.xcframework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = DCB3F0B32E14F3760031EEBF /* CloudCommerce.xcframework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		DCB3F09B2E14F1610031EEBF /* Decimal+Round.swift in Sources */ = {isa = PBXBuildFile; fileRef = DCB3F0982E14F1610031EEBF /* Decimal+Round.swift */; };
+		DCB3F09C2E14F1610031EEBF /* TransactionDetails.swift in Sources */ = {isa = PBXBuildFile; fileRef = DCB3F0952E14F1610031EEBF /* TransactionDetails.swift */; };
+		DCB3F09D2E14F1610031EEBF /* CloudCommerce+MerchantMapping.swift.swift in Sources */ = {isa = PBXBuildFile; fileRef = DCB3F0972E14F1610031EEBF /* CloudCommerce+MerchantMapping.swift.swift */; };
+		DCB3F09E2E14F1610031EEBF /* CloudCommerceModule.swift in Sources */ = {isa = PBXBuildFile; fileRef = DCB3F0932E14F1610031EEBF /* CloudCommerceModule.swift */; };
+		DCB3F09F2E14F1610031EEBF /* CloudCommerceBridge.m in Sources */ = {isa = PBXBuildFile; fileRef = DCB3F0922E14F1610031EEBF /* CloudCommerceBridge.m */; };
+		DCB3F0A02E14F1610031EEBF /* NSDictionary+Decoding.swift in Sources */ = {isa = PBXBuildFile; fileRef = DCB3F0992E14F1610031EEBF /* NSDictionary+Decoding.swift */; };
+		DCB3F0A12E14F1610031EEBF /* Merchant.swift in Sources */ = {isa = PBXBuildFile; fileRef = DCB3F0942E14F1610031EEBF /* Merchant.swift */; };
+		DCB3F0A32E14F1D70031EEBF /* ProximityReader.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1259DB412C8F52B500483F06 /* ProximityReader.framework */; };
+		DCB3F0AA2E14F2C00031EEBF /* X509 in Frameworks */ = {isa = PBXBuildFile; productRef = DCB3F0A92E14F2C00031EEBF /* X509 */; };
+		DCB3F0AC2E14F2C00031EEBF /* SwiftASN1 in Frameworks */ = {isa = PBXBuildFile; productRef = DCB3F0AB2E14F2C00031EEBF /* SwiftASN1 */; };
+		DCB3F0B22E14F3430031EEBF /* CryptoSwift in Frameworks */ = {isa = PBXBuildFile; productRef = DCB3F0B12E14F3430031EEBF /* CryptoSwift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		00E356F41AD99517003FC87E /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 83CBB9F71A601CBA00E9B192 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 13B07F861A680F5B00A75B9A;
+			remoteInfo = Arise;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		DCB3F0B62E14F3760031EEBF /* Embed Frameworks */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 10;
+			files = (
+				DC5E408F2ED89CF000D3F420 /* CloudCommerce.xcframework in Embed Frameworks */,
+				14E4550C2ECE3DB9006394BA /* AriseMobileSdk.xcframework in Embed Frameworks */,
+			);
+			name = "Embed Frameworks";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
+/* Begin PBXFileReference section */
+		00E356EE1AD99517003FC87E /* AriseTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = AriseTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		00E356F11AD99517003FC87E /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		00E356F21AD99517003FC87E /* AriseTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = AriseTests.m; sourceTree = "<group>"; };
+		09A36B6FD498FF8940C6EBF5 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xml; name = PrivacyInfo.xcprivacy; path = Arise/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
+		1259DB412C8F52B500483F06 /* ProximityReader.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = ProximityReader.framework; path = System/Library/Frameworks/ProximityReader.framework; sourceTree = SDKROOT; };
+		1259DB472C8F555700483F06 /* Arise.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; name = Arise.entitlements; path = Arise/Arise.entitlements; sourceTree = "<group>"; };
+		13B07F961A680F5B00A75B9A /* Arise.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Arise.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		13B07FAF1A68108700A75B9A /* AppDelegate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = AppDelegate.h; path = Arise/AppDelegate.h; sourceTree = "<group>"; };
+		13B07FB01A68108700A75B9A /* AppDelegate.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; name = AppDelegate.mm; path = Arise/AppDelegate.mm; sourceTree = "<group>"; };
+		13B07FB51A68108700A75B9A /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Images.xcassets; path = Arise/Images.xcassets; sourceTree = "<group>"; };
+		13B07FB61A68108700A75B9A /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = Info.plist; path = Arise/Info.plist; sourceTree = "<group>"; };
+		13B07FB71A68108700A75B9A /* main.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = main.m; path = Arise/main.m; sourceTree = "<group>"; };
+		13B07FB81A68108700A75B9A /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = PrivacyInfo.xcprivacy; path = Arise/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
+		1410C97A2EB974AA0075671D /* AtlantisManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AtlantisManager.swift; sourceTree = "<group>"; };
+		1410C97B2EB974AA0075671D /* AtlantisManagerBridge.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = AtlantisManagerBridge.m; sourceTree = "<group>"; };
+		142291782DDF5F200059166C /* Config.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Config.xcconfig; sourceTree = "<group>"; };
+		14E4550A2ECE3DB9006394BA /* AriseMobileSdk.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; name = AriseMobileSdk.xcframework; path = Frameworks/AriseMobileSdk.xcframework; sourceTree = "<group>"; };
+		59560C2FC5843F9DFE9F9D29 /* Pods-Arise-AriseTests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Arise-AriseTests.release.xcconfig"; path = "Target Support Files/Pods-Arise-AriseTests/Pods-Arise-AriseTests.release.xcconfig"; sourceTree = "<group>"; };
+		5B70FF9FACCDA3366F5C3CF9 /* Pods-Arise.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Arise.release.xcconfig"; path = "Target Support Files/Pods-Arise/Pods-Arise.release.xcconfig"; sourceTree = "<group>"; };
+		5B95D4761BF2116359115A4D /* Pods-Arise-AriseTests.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Arise-AriseTests.debug.xcconfig"; path = "Target Support Files/Pods-Arise-AriseTests/Pods-Arise-AriseTests.debug.xcconfig"; sourceTree = "<group>"; };
+		5F3DDB70AE381D24CBF91898 /* libPods-Arise-AriseTests.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-Arise-AriseTests.a"; sourceTree = BUILT_PRODUCTS_DIR; };
+		63E0A1002F0DAABC00A0B111 /* AriseMobileSdkModule.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AriseMobileSdkModule.swift; sourceTree = "<group>"; };
+		63E0A1012F0DAABC00A0B111 /* AriseMobileSdkBridge.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = AriseMobileSdkBridge.m; sourceTree = "<group>"; };
+		7E85DFDC32D23B5C5B628809 /* Pods-Arise.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Arise.debug.xcconfig"; path = "Target Support Files/Pods-Arise/Pods-Arise.debug.xcconfig"; sourceTree = "<group>"; };
+		81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = LaunchScreen.storyboard; path = Arise/LaunchScreen.storyboard; sourceTree = "<group>"; };
+		B6DE3B5FEDE1C1DADDD61FEB /* libPods-Arise.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-Arise.a"; sourceTree = BUILT_PRODUCTS_DIR; };
+		DCB3F0912E14F1610031EEBF /* Arise-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "Arise-Bridging-Header.h"; sourceTree = "<group>"; };
+		DCB3F0922E14F1610031EEBF /* CloudCommerceBridge.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = CloudCommerceBridge.m; sourceTree = "<group>"; };
+		DCB3F0932E14F1610031EEBF /* CloudCommerceModule.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CloudCommerceModule.swift; sourceTree = "<group>"; };
+		DCB3F0942E14F1610031EEBF /* Merchant.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Merchant.swift; sourceTree = "<group>"; };
+		DCB3F0952E14F1610031EEBF /* TransactionDetails.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TransactionDetails.swift; sourceTree = "<group>"; };
+		DCB3F0972E14F1610031EEBF /* CloudCommerce+MerchantMapping.swift.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "CloudCommerce+MerchantMapping.swift.swift"; sourceTree = "<group>"; };
+		DCB3F0982E14F1610031EEBF /* Decimal+Round.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Decimal+Round.swift"; sourceTree = "<group>"; };
+		DCB3F0992E14F1610031EEBF /* NSDictionary+Decoding.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "NSDictionary+Decoding.swift"; sourceTree = "<group>"; };
+		DCB3F0A22E14F17A0031EEBF /* AriseDebug.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; name = AriseDebug.entitlements; path = Arise/AriseDebug.entitlements; sourceTree = "<group>"; };
+		DCB3F0B32E14F3760031EEBF /* CloudCommerce.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; name = CloudCommerce.xcframework; path = Frameworks/CloudCommerce.xcframework; sourceTree = "<group>"; };
+		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		00E356EB1AD99517003FC87E /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				CF560DC8C58315F2417FFD8E /* libPods-Arise-AriseTests.a in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		13B07F8C1A680F5B00A75B9A /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				807EB33D9C5455D810B65F3B /* libPods-Arise.a in Frameworks */,
+				DCB3F0A32E14F1D70031EEBF /* ProximityReader.framework in Frameworks */,
+				DC5E408E2ED89CF000D3F420 /* CloudCommerce.xcframework in Frameworks */,
+				14E4550B2ECE3DB9006394BA /* AriseMobileSdk.xcframework in Frameworks */,
+				14FD46192ECF3FE900896EB9 /* CryptoSwift in Frameworks */,
+				14FD46152ECF3F7700896EB9 /* OpenAPIURLSession in Frameworks */,
+				14FD46172ECF3FBF00896EB9 /* X509 in Frameworks */,
+				DCB3F0AA2E14F2C00031EEBF /* X509 in Frameworks */,
+				DCB3F0B22E14F3430031EEBF /* CryptoSwift in Frameworks */,
+				DCB3F0AC2E14F2C00031EEBF /* SwiftASN1 in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		00E356EF1AD99517003FC87E /* AriseTests */ = {
+			isa = PBXGroup;
+			children = (
+				00E356F21AD99517003FC87E /* AriseTests.m */,
+				00E356F01AD99517003FC87E /* Supporting Files */,
+			);
+			path = AriseTests;
+			sourceTree = "<group>";
+		};
+		00E356F01AD99517003FC87E /* Supporting Files */ = {
+			isa = PBXGroup;
+			children = (
+				00E356F11AD99517003FC87E /* Info.plist */,
+			);
+			name = "Supporting Files";
+			sourceTree = "<group>";
+		};
+		13B07FAE1A68108700A75B9A /* Arise */ = {
+			isa = PBXGroup;
+			children = (
+				DCB3F0A22E14F17A0031EEBF /* AriseDebug.entitlements */,
+				63E0A0FF2F0DAABC00A0B111 /* AriseMobileSdk */,
+				DCB3F0962E14F1610031EEBF /* CloudCommerce */,
+				DCB3F09A2E14F1610031EEBF /* Extensions */,
+				1259DB472C8F555700483F06 /* Arise.entitlements */,
+				13B07FAF1A68108700A75B9A /* AppDelegate.h */,
+				13B07FB01A68108700A75B9A /* AppDelegate.mm */,
+				13B07FB51A68108700A75B9A /* Images.xcassets */,
+				13B07FB61A68108700A75B9A /* Info.plist */,
+				81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */,
+				13B07FB71A68108700A75B9A /* main.m */,
+				13B07FB81A68108700A75B9A /* PrivacyInfo.xcprivacy */,
+				09A36B6FD498FF8940C6EBF5 /* PrivacyInfo.xcprivacy */,
+			);
+			name = Arise;
+			sourceTree = "<group>";
+		};
+		2D16E6871FA4F8E400B85C8A /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				14E4550A2ECE3DB9006394BA /* AriseMobileSdk.xcframework */,
+				DCB3F0B32E14F3760031EEBF /* CloudCommerce.xcframework */,
+				1259DB412C8F52B500483F06 /* ProximityReader.framework */,
+				ED297162215061F000B7C4FE /* JavaScriptCore.framework */,
+				B6DE3B5FEDE1C1DADDD61FEB /* libPods-Arise.a */,
+				5F3DDB70AE381D24CBF91898 /* libPods-Arise-AriseTests.a */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		63E0A0FF2F0DAABC00A0B111 /* AriseMobileSdk */ = {
+			isa = PBXGroup;
+			children = (
+				63E0A1002F0DAABC00A0B111 /* AriseMobileSdkModule.swift */,
+				63E0A1012F0DAABC00A0B111 /* AriseMobileSdkBridge.m */,
+			);
+			path = AriseMobileSdk;
+			sourceTree = "<group>";
+		};
+		832341AE1AAA6A7D00B99B32 /* Libraries */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Libraries;
+			sourceTree = "<group>";
+		};
+		83CBB9F61A601CBA00E9B192 = {
+			isa = PBXGroup;
+			children = (
+				1410C97A2EB974AA0075671D /* AtlantisManager.swift */,
+				1410C97B2EB974AA0075671D /* AtlantisManagerBridge.m */,
+				13B07FAE1A68108700A75B9A /* Arise */,
+				832341AE1AAA6A7D00B99B32 /* Libraries */,
+				00E356EF1AD99517003FC87E /* AriseTests */,
+				83CBBA001A601CBA00E9B192 /* Products */,
+				2D16E6871FA4F8E400B85C8A /* Frameworks */,
+				BBD78D7AC51CEA395F1C20DB /* Pods */,
+				142291782DDF5F200059166C /* Config.xcconfig */,
+			);
+			indentWidth = 2;
+			sourceTree = "<group>";
+			tabWidth = 2;
+			usesTabs = 0;
+		};
+		83CBBA001A601CBA00E9B192 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				13B07F961A680F5B00A75B9A /* Arise.app */,
+				00E356EE1AD99517003FC87E /* AriseTests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		BBD78D7AC51CEA395F1C20DB /* Pods */ = {
+			isa = PBXGroup;
+			children = (
+				7E85DFDC32D23B5C5B628809 /* Pods-Arise.debug.xcconfig */,
+				5B70FF9FACCDA3366F5C3CF9 /* Pods-Arise.release.xcconfig */,
+				5B95D4761BF2116359115A4D /* Pods-Arise-AriseTests.debug.xcconfig */,
+				59560C2FC5843F9DFE9F9D29 /* Pods-Arise-AriseTests.release.xcconfig */,
+			);
+			path = Pods;
+			sourceTree = "<group>";
+		};
+		DCB3F0962E14F1610031EEBF /* CloudCommerce */ = {
+			isa = PBXGroup;
+			children = (
+				DCB3F0912E14F1610031EEBF /* Arise-Bridging-Header.h */,
+				DCB3F0922E14F1610031EEBF /* CloudCommerceBridge.m */,
+				DCB3F0932E14F1610031EEBF /* CloudCommerceModule.swift */,
+				DCB3F0942E14F1610031EEBF /* Merchant.swift */,
+				DCB3F0952E14F1610031EEBF /* TransactionDetails.swift */,
+			);
+			path = CloudCommerce;
+			sourceTree = "<group>";
+		};
+		DCB3F09A2E14F1610031EEBF /* Extensions */ = {
+			isa = PBXGroup;
+			children = (
+				DCB3F0972E14F1610031EEBF /* CloudCommerce+MerchantMapping.swift.swift */,
+				DCB3F0982E14F1610031EEBF /* Decimal+Round.swift */,
+				DCB3F0992E14F1610031EEBF /* NSDictionary+Decoding.swift */,
+			);
+			path = Extensions;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		00E356ED1AD99517003FC87E /* AriseTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 00E357021AD99517003FC87E /* Build configuration list for PBXNativeTarget "AriseTests" */;
+			buildPhases = (
+				3940E13ABA03C054C98763F8 /* [CP] Check Pods Manifest.lock */,
+				00E356EA1AD99517003FC87E /* Sources */,
+				00E356EB1AD99517003FC87E /* Frameworks */,
+				00E356EC1AD99517003FC87E /* Resources */,
+				ABD35EE115E0A665B30E6E47 /* [CP] Embed Pods Frameworks */,
+				A3D9B85F4214388DCB6061F0 /* [CP] Copy Pods Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				00E356F51AD99517003FC87E /* PBXTargetDependency */,
+			);
+			name = AriseTests;
+			productName = AriseTests;
+			productReference = 00E356EE1AD99517003FC87E /* AriseTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+		13B07F861A680F5B00A75B9A /* Arise */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 13B07F931A680F5B00A75B9A /* Build configuration list for PBXNativeTarget "Arise" */;
+			buildPhases = (
+				D2F707963EF7A60A131967BB /* [CP] Check Pods Manifest.lock */,
+				13B07F871A680F5B00A75B9A /* Sources */,
+				13B07F8C1A680F5B00A75B9A /* Frameworks */,
+				13B07F8E1A680F5B00A75B9A /* Resources */,
+				00DD1BFF1BD5951E006B06BC /* Bundle React Native code and images */,
+				0B5759B84479441FA11BDF91 /* Upload Debug Symbols to Sentry */,
+				903DF653D78C379DA73CFF74 /* [CP] Embed Pods Frameworks */,
+				521041612B3D4D878B4674F2 /* [CP] Copy Pods Resources */,
+				DCB3F0B62E14F3760031EEBF /* Embed Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = Arise;
+			productName = Arise;
+			productReference = 13B07F961A680F5B00A75B9A /* Arise.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		83CBB9F71A601CBA00E9B192 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				LastUpgradeCheck = 1210;
+				TargetAttributes = {
+					00E356ED1AD99517003FC87E = {
+						CreatedOnToolsVersion = 6.2;
+						TestTargetID = 13B07F861A680F5B00A75B9A;
+					};
+					13B07F861A680F5B00A75B9A = {
+						LastSwiftMigration = 1540;
+					};
+				};
+			};
+			buildConfigurationList = 83CBB9FA1A601CBA00E9B192 /* Build configuration list for PBXProject "Arise" */;
+			compatibilityVersion = "Xcode 12.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = 83CBB9F61A601CBA00E9B192;
+			packageReferences = (
+				DCB3F0A42E14F20C0031EEBF /* XCRemoteSwiftPackageReference "CryptoSwift" */,
+				DCB3F0A52E14F2470031EEBF /* XCRemoteSwiftPackageReference "swift-certificates" */,
+				DCB3F0A62E14F26A0031EEBF /* XCRemoteSwiftPackageReference "swift-asn1" */,
+				14E4550D2ECF3A49006394BA /* XCRemoteSwiftPackageReference "swift-openapi-urlsession" */,
+			);
+			productRefGroup = 83CBBA001A601CBA00E9B192 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				13B07F861A680F5B00A75B9A /* Arise */,
+				00E356ED1AD99517003FC87E /* AriseTests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		00E356EC1AD99517003FC87E /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		13B07F8E1A680F5B00A75B9A /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				81AB9BB82411601600AC10FF /* LaunchScreen.storyboard in Resources */,
+				13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */,
+				20E532B4967A4CC715FC90E9 /* PrivacyInfo.xcprivacy in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXShellScriptBuildPhase section */
+		00DD1BFF1BD5951E006B06BC /* Bundle React Native code and images */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+				"$(SRCROOT)/.xcode.env.local",
+				"$(SRCROOT)/.xcode.env",
+			);
+			name = "Bundle React Native code and images";
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/zsh;
+			shellScript = "set -e\nWITH_ENVIRONMENT=\"../node_modules/react-native/scripts/xcode/with-environment.sh\"\nREACT_NATIVE_XCODE=\"../node_modules/react-native/scripts/react-native-xcode.sh\"\nSENTRY_XCODE=\"../node_modules/@sentry/react-native/scripts/sentry-xcode.sh\"\nBUNDLE_REACT_NATIVE=\"/bin/sh $SENTRY_XCODE $REACT_NATIVE_XCODE\"\n# RN 0.69+\n/bin/sh -c \"$WITH_ENVIRONMENT \\\"$BUNDLE_REACT_NATIVE\\\"\"\n";
+		};
+		0B5759B84479441FA11BDF91 /* Upload Debug Symbols to Sentry */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			name = "Upload Debug Symbols to Sentry";
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "/bin/sh ../node_modules/@sentry/react-native/scripts/sentry-xcode-debug-files.sh";
+		};
+		3940E13ABA03C054C98763F8 /* [CP] Check Pods Manifest.lock */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+				"${PODS_PODFILE_DIR_PATH}/Podfile.lock",
+				"${PODS_ROOT}/Manifest.lock",
+			);
+			name = "[CP] Check Pods Manifest.lock";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+				"$(DERIVED_FILE_DIR)/Pods-Arise-AriseTests-checkManifestLockResult.txt",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
+			showEnvVarsInLog = 0;
+		};
+		521041612B3D4D878B4674F2 /* [CP] Copy Pods Resources */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-Arise/Pods-Arise-resources-${CONFIGURATION}-input-files.xcfilelist",
+			);
+			name = "[CP] Copy Pods Resources";
+			outputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-Arise/Pods-Arise-resources-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-Arise/Pods-Arise-resources.sh\"\n";
+			showEnvVarsInLog = 0;
+		};
+		903DF653D78C379DA73CFF74 /* [CP] Embed Pods Frameworks */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-Arise/Pods-Arise-frameworks-${CONFIGURATION}-input-files.xcfilelist",
+			);
+			name = "[CP] Embed Pods Frameworks";
+			outputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-Arise/Pods-Arise-frameworks-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-Arise/Pods-Arise-frameworks.sh\"\n";
+			showEnvVarsInLog = 0;
+		};
+		A3D9B85F4214388DCB6061F0 /* [CP] Copy Pods Resources */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-Arise-AriseTests/Pods-Arise-AriseTests-resources-${CONFIGURATION}-input-files.xcfilelist",
+			);
+			name = "[CP] Copy Pods Resources";
+			outputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-Arise-AriseTests/Pods-Arise-AriseTests-resources-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-Arise-AriseTests/Pods-Arise-AriseTests-resources.sh\"\n";
+			showEnvVarsInLog = 0;
+		};
+		ABD35EE115E0A665B30E6E47 /* [CP] Embed Pods Frameworks */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-Arise-AriseTests/Pods-Arise-AriseTests-frameworks-${CONFIGURATION}-input-files.xcfilelist",
+			);
+			name = "[CP] Embed Pods Frameworks";
+			outputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-Arise-AriseTests/Pods-Arise-AriseTests-frameworks-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-Arise-AriseTests/Pods-Arise-AriseTests-frameworks.sh\"\n";
+			showEnvVarsInLog = 0;
+		};
+		D2F707963EF7A60A131967BB /* [CP] Check Pods Manifest.lock */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+				"${PODS_PODFILE_DIR_PATH}/Podfile.lock",
+				"${PODS_ROOT}/Manifest.lock",
+			);
+			name = "[CP] Check Pods Manifest.lock";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+				"$(DERIVED_FILE_DIR)/Pods-Arise-checkManifestLockResult.txt",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
+			showEnvVarsInLog = 0;
+		};
+/* End PBXShellScriptBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		00E356EA1AD99517003FC87E /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				00E356F31AD99517003FC87E /* AriseTests.m in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		13B07F871A680F5B00A75B9A /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				13B07FBC1A68108700A75B9A /* AppDelegate.mm in Sources */,
+				13B07FC11A68108700A75B9A /* main.m in Sources */,
+				DCB3F09B2E14F1610031EEBF /* Decimal+Round.swift in Sources */,
+				DCB3F09C2E14F1610031EEBF /* TransactionDetails.swift in Sources */,
+				DCB3F09D2E14F1610031EEBF /* CloudCommerce+MerchantMapping.swift.swift in Sources */,
+				DCB3F09E2E14F1610031EEBF /* CloudCommerceModule.swift in Sources */,
+				DCB3F09F2E14F1610031EEBF /* CloudCommerceBridge.m in Sources */,
+				63E0A1022F0DAABC00A0B111 /* AriseMobileSdkModule.swift in Sources */,
+				63E0A1032F0DAABC00A0B111 /* AriseMobileSdkBridge.m in Sources */,
+				1410C97C2EB974AA0075671D /* AtlantisManager.swift in Sources */,
+				1410C97D2EB974AA0075671D /* AtlantisManagerBridge.m in Sources */,
+				DCB3F0A02E14F1610031EEBF /* NSDictionary+Decoding.swift in Sources */,
+				DCB3F0A12E14F1610031EEBF /* Merchant.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		00E356F51AD99517003FC87E /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 13B07F861A680F5B00A75B9A /* Arise */;
+			targetProxy = 00E356F41AD99517003FC87E /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		00E356F61AD99517003FC87E /* Debug */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = 5B95D4761BF2116359115A4D /* Pods-Arise-AriseTests.debug.xcconfig */;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				INFOPLIST_FILE = AriseTests/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				OTHER_LDFLAGS = (
+					"-ObjC",
+					"-lc++",
+					"$(inherited)",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.arise.merchant;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Arise.app/Arise";
+			};
+			name = Debug;
+		};
+		00E356F71AD99517003FC87E /* Release */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = 59560C2FC5843F9DFE9F9D29 /* Pods-Arise-AriseTests.release.xcconfig */;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				COPY_PHASE_STRIP = NO;
+				INFOPLIST_FILE = AriseTests/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				OTHER_LDFLAGS = (
+					"-ObjC",
+					"-lc++",
+					"$(inherited)",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.arise.merchant;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Arise.app/Arise";
+			};
+			name = Release;
+		};
+		13B07F941A680F5B00A75B9A /* Debug */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = 7E85DFDC32D23B5C5B628809 /* Pods-Arise.debug.xcconfig */;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = NO;
+				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_ENTITLEMENTS = Arise/AriseDebug.entitlements;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 5;
+				DEVELOPMENT_TEAM = 69WQLJ9K8N;
+				ENABLE_BITCODE = NO;
+				INFOPLIST_FILE = Arise/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "Arise Merchant";
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.finance";
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0.2;
+				OTHER_LDFLAGS = (
+					"$(inherited)",
+					"-ObjC",
+					"-lc++",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.arise.merchant;
+				PRODUCT_NAME = Arise;
+				PROVISIONING_PROFILE_SPECIFIER = "";
+				SWIFT_OBJC_BRIDGING_HEADER = "Arise-Bridging-Header.h";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
+				VERSIONING_SYSTEM = "apple-generic";
+			};
+			name = Debug;
+		};
+		13B07F951A680F5B00A75B9A /* Release */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = 5B70FF9FACCDA3366F5C3CF9 /* Pods-Arise.release.xcconfig */;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = NO;
+				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_ENTITLEMENTS = Arise/Arise.entitlements;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 5;
+				DEVELOPMENT_TEAM = 69WQLJ9K8N;
+				INFOPLIST_FILE = Arise/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "Arise Merchant";
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.finance";
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0.2;
+				OTHER_LDFLAGS = (
+					"$(inherited)",
+					"-ObjC",
+					"-lc++",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.arise.merchant;
+				PRODUCT_NAME = Arise;
+				PROVISIONING_PROFILE_SPECIFIER = "";
+				SWIFT_OBJC_BRIDGING_HEADER = "Arise-Bridging-Header.h";
+				SWIFT_VERSION = 5.0;
+				VERSIONING_SYSTEM = "apple-generic";
+			};
+			name = Release;
+		};
+		83CBBA201A601CBA00E9B192 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = 142291782DDF5F200059166C /* Config.xcconfig */;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CC = "";
+				CLANG_ANALYZER_LOCALIZABILITY_NONLOCALIZED = YES;
+				CLANG_CXX_LANGUAGE_STANDARD = "c++20";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
+				COPY_PHASE_STRIP = NO;
+				CXX = "";
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				"EXCLUDED_ARCHS[sdk=iphonesimulator*]" = "";
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
+				LD = "";
+				LDPLUSPLUS = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					/usr/lib/swift,
+					"$(inherited)",
+				);
+				LIBRARY_SEARCH_PATHS = (
+					"\"$(SDKROOT)/usr/lib/swift\"",
+					"\"$(TOOLCHAIN_DIR)/usr/lib/swift/$(PLATFORM_NAME)\"",
+					"\"$(inherited)\"",
+				);
+				MTL_ENABLE_DEBUG_INFO = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				OTHER_CPLUSPLUSFLAGS = (
+					"$(OTHER_CFLAGS)",
+					"-DFOLLY_NO_CONFIG",
+					"-DFOLLY_MOBILE=1",
+					"-DFOLLY_USE_LIBCPP=1",
+					"-DFOLLY_CFG_NO_COROUTINES=1",
+					"-DFOLLY_HAVE_CLOCK_GETTIME=1",
+				);
+				OTHER_LDFLAGS = (
+					"$(inherited)",
+					" ",
+				);
+				REACT_NATIVE_PATH = "${PODS_ROOT}/../../node_modules/react-native";
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "$(inherited) DEBUG";
+				USE_HERMES = false;
+			};
+			name = Debug;
+		};
+		83CBBA211A601CBA00E9B192 /* Release */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = 142291782DDF5F200059166C /* Config.xcconfig */;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CC = "";
+				CLANG_ANALYZER_LOCALIZABILITY_NONLOCALIZED = YES;
+				CLANG_CXX_LANGUAGE_STANDARD = "c++20";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
+				COPY_PHASE_STRIP = YES;
+				CXX = "";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				"EXCLUDED_ARCHS[sdk=iphonesimulator*]" = "";
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
+				LD = "";
+				LDPLUSPLUS = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					/usr/lib/swift,
+					"$(inherited)",
+				);
+				LIBRARY_SEARCH_PATHS = (
+					"\"$(SDKROOT)/usr/lib/swift\"",
+					"\"$(TOOLCHAIN_DIR)/usr/lib/swift/$(PLATFORM_NAME)\"",
+					"\"$(inherited)\"",
+				);
+				MTL_ENABLE_DEBUG_INFO = NO;
+				OTHER_CPLUSPLUSFLAGS = (
+					"$(OTHER_CFLAGS)",
+					"-DFOLLY_NO_CONFIG",
+					"-DFOLLY_MOBILE=1",
+					"-DFOLLY_USE_LIBCPP=1",
+					"-DFOLLY_CFG_NO_COROUTINES=1",
+					"-DFOLLY_HAVE_CLOCK_GETTIME=1",
+				);
+				OTHER_LDFLAGS = (
+					"$(inherited)",
+					" ",
+				);
+				REACT_NATIVE_PATH = "${PODS_ROOT}/../../node_modules/react-native";
+				SDKROOT = iphoneos;
+				USE_HERMES = false;
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		00E357021AD99517003FC87E /* Build configuration list for PBXNativeTarget "AriseTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				00E356F61AD99517003FC87E /* Debug */,
+				00E356F71AD99517003FC87E /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		13B07F931A680F5B00A75B9A /* Build configuration list for PBXNativeTarget "Arise" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				13B07F941A680F5B00A75B9A /* Debug */,
+				13B07F951A680F5B00A75B9A /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		83CBB9FA1A601CBA00E9B192 /* Build configuration list for PBXProject "Arise" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				83CBBA201A601CBA00E9B192 /* Debug */,
+				83CBBA211A601CBA00E9B192 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		14E4550D2ECF3A49006394BA /* XCRemoteSwiftPackageReference "swift-openapi-urlsession" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/apple/swift-openapi-urlsession.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.2.0;
+			};
+		};
+		DCB3F0A42E14F20C0031EEBF /* XCRemoteSwiftPackageReference "CryptoSwift" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/krzyzanowskim/CryptoSwift.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.8.5;
+			};
+		};
+		DCB3F0A52E14F2470031EEBF /* XCRemoteSwiftPackageReference "swift-certificates" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/apple/swift-certificates.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.10.0;
+			};
+		};
+		DCB3F0A62E14F26A0031EEBF /* XCRemoteSwiftPackageReference "swift-asn1" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/apple/swift-asn1.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.4.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		14FD46142ECF3F7700896EB9 /* OpenAPIURLSession */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = OpenAPIURLSession;
+		};
+		14FD46162ECF3FBF00896EB9 /* X509 */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = X509;
+		};
+		14FD46182ECF3FE900896EB9 /* CryptoSwift */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = CryptoSwift;
+		};
+		DCB3F0A92E14F2C00031EEBF /* X509 */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = DCB3F0A52E14F2470031EEBF /* XCRemoteSwiftPackageReference "swift-certificates" */;
+			productName = X509;
+		};
+		DCB3F0AB2E14F2C00031EEBF /* SwiftASN1 */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = DCB3F0A62E14F26A0031EEBF /* XCRemoteSwiftPackageReference "swift-asn1" */;
+			productName = SwiftASN1;
+		};
+		DCB3F0B12E14F3430031EEBF /* CryptoSwift */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = DCB3F0A42E14F20C0031EEBF /* XCRemoteSwiftPackageReference "CryptoSwift" */;
+			productName = CryptoSwift;
+		};
+/* End XCSwiftPackageProductDependency section */
+	};
+	rootObject = 83CBB9F71A601CBA00E9B192 /* Project object */;
+}

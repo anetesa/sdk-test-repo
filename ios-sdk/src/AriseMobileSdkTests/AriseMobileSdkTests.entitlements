@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>keychain-access-groups</key>
+	<array>
+		<string>$(AppIdentifierPrefix)com.arise.mobile.sdk.AriseMobileSdkTests</string>
+	</array>
+	<!-- 
+		Note: DeviceCheck, NFC, and Payment Acceptance entitlements are removed
+		from test target to avoid provisioning profile issues. These entitlements
+		are only needed for CloudCommerce SDK, which is optional in test environment.
+		The SDK will continue to work without CloudCommerce SDK in tests.
+	-->
+</dict>
+</plist>
+

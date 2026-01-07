@@ -1,0 +1,30 @@
+#!/bin/sh
+
+echo "🔍 Running pre-commit checks..."
+echo "💡 To bypass these checks, use: git commit --no-verify"
+
+# Run TypeScript type checking
+echo "📝 Type checking..."
+yarn type-check
+if [ $? -ne 0 ]; then
+  echo "❌ TypeScript type checking failed. Please fix the errors before committing."
+  exit 1
+fi
+
+# Run ESLint
+echo "🔍 Linting..."
+yarn lint
+if [ $? -ne 0 ]; then
+  echo "❌ ESLint failed. Please fix the linting errors before committing."
+  exit 1
+fi
+
+# Run tests
+echo "🧪 Running tests..."
+yarn test
+if [ $? -ne 0 ]; then
+  echo "❌ Tests failed. Please fix the failing tests before committing."
+  exit 1
+fi
+
+echo "✅ All pre-commit checks passed!"

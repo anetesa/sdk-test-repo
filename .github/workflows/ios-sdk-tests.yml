@@ -1,0 +1,150 @@
+name: iOS SDK Tests
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'ios-sdk/src/**'
+      - 'ios-sdk/libs/test_ci.sh'
+      - '.github/workflows/ios-sdk-tests.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'ios-sdk/src/**'
+      - 'ios-sdk/libs/test_ci.sh'
+      - '.github/workflows/ios-sdk-tests.yml'
+  workflow_dispatch:
+
+jobs:
+  test:
+    # Use macos-26 for access to Xcode with Swift 6.2.1+ and newer iOS SDK
+    # CloudCommerce requires Swift 6.2.1+ and ProximityReader.StoreAndForwardStatus
+    runs-on: macos-26
+    timeout-minutes: 360
+    
+    steps:
+      - name: Checkout source repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: Setup Xcode
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          # IMPORTANT: Use latest-stable to match local development environment (Swift 6.2.3)
+          # This ensures binary framework compatibility between CI and local builds
+          # If your local Xcode version differs, update this to match your local version
+          # CloudCommerce.xcframework requires Swift 6.2.1+ and newer iOS SDK for ProximityReader
+          xcode-version: latest-stable
+      
+      - name: Cache DerivedData and SourcePackages
+        uses: actions/cache@v4
+        with:
+          path: |
+            DerivedData-Tests
+            ~/Library/Developer/Xcode/DerivedData
+            ~/Library/Caches/org.swift.swiftpm
+            DerivedData-Tests/SourcePackages
+          key: ${{ runner.os }}-xcode-tests-${{ hashFiles('ios-sdk/src/AriseMobileSdk.xcodeproj/project.pbxproj', 'ios-sdk/src/AriseMobileSdk.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved') }}
+          restore-keys: |
+            ${{ runner.os }}-xcode-tests-
+            ${{ runner.os }}-xcode-
+          # Increase cache size limit for large Swift packages
+          # SourcePackages can be several GB for swift-crypto and dependencies
+      
+      - name: Verify Swift and Xcode versions
+        run: |
+          echo "Xcode version:"
+          xcodebuild -version
+          echo ""
+          echo "Swift version:"
+          swift --version
+          echo ""
+          echo "Full Swift version details:"
+          xcrun swift --version
+      
+      - name: Run Tests
+        timeout-minutes: 360
+        run: |
+          # Make test script executable
+          chmod +x ios-sdk/libs/test_ci.sh
+          
+          # Run tests using CI script
+          ./ios-sdk/libs/test_ci.sh
+      
+      - name: Upload Test Results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: |
+            test-results.xcresult
+            /tmp/test_output.log
+          retention-days: 30
+          if-no-files-found: warn
+      
+      - name: Generate Test Coverage Report
+        if: always()
+        run: |
+          if [ -d "./test-results.xcresult" ]; then
+            echo "📊 Generating test coverage report using project scripts..."
+            
+            # Make scripts executable
+            chmod +x ios-sdk/coverage/scripts/*.sh 2>/dev/null || true
+            
+            # Generate coverage report using project script
+            if [ -f "ios-sdk/coverage/scripts/generate_coverage_report.sh" ]; then
+              echo "✅ Using generate_coverage_report.sh..."
+              cd ios-sdk/coverage/scripts
+              bash generate_coverage_report.sh "../../../test-results.xcresult" || {
+                echo "⚠️  generate_coverage_report.sh failed, trying detailed report..."
+                bash generate_detailed_coverage.sh "../../../test-results.xcresult" || {
+                  echo "⚠️  Detailed report also failed, using fallback"
+                }
+              }
+              cd ../../..
+            elif [ -f "ios-sdk/coverage/scripts/generate_detailed_coverage.sh" ]; then
+              echo "✅ Using generate_detailed_coverage.sh..."
+              cd ios-sdk/coverage/scripts
+              bash generate_detailed_coverage.sh "../../../test-results.xcresult" || echo "⚠️  Detailed report generation failed"
+              cd ../../..
+            else
+              echo "⚠️  Coverage report scripts not found, using fallback..."
+            fi
+            
+            # Also run check_coverage.sh for summary
+            if [ -f "ios-sdk/coverage/scripts/check_coverage.sh" ]; then
+              echo ""
+              echo "📋 Running coverage check..."
+              cd ios-sdk/coverage/scripts
+              bash check_coverage.sh 75 "../../../test-results.xcresult" || echo "⚠️  Coverage check failed"
+              cd ../../..
+            fi
+            
+            # Display generated reports if they exist
+            if [ -f "ios-sdk/coverage/coverage_report.md" ]; then
+              echo ""
+              echo "✅ Coverage report generated: ios-sdk/coverage/coverage_report.md"
+              echo "📄 Report preview (first 50 lines):"
+              head -50 ios-sdk/coverage/coverage_report.md || true
+            fi
+            
+            if [ -f "ios-sdk/coverage/detailed_coverage_report.md" ]; then
+              echo ""
+              echo "✅ Detailed coverage report generated: ios-sdk/coverage/detailed_coverage_report.md"
+            fi
+          else
+            echo "⚠️  Test results bundle not found at ./test-results.xcresult"
+          fi
+      
+      - name: Upload Coverage Reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-reports
+          path: |
+            ios-sdk/coverage/coverage_report.md
+            ios-sdk/coverage/detailed_coverage_report.md
+          retention-days: 30
+          if-no-files-found: warn
+
