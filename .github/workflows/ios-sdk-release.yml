@@ -231,8 +231,8 @@ jobs:
         run: |
           echo "🔨 Building new framework..."
           cd ios-sdk/libs
-          chmod +x build_framework_ci.sh
-          bash build_framework_ci.sh
+          chmod +x build_and_test_ci.sh
+          bash build_and_test_ci.sh build
           ls -lh AriseMobile.xcframework
       
       - name: Use existing framework

@@ -196,11 +196,11 @@ jobs:
       - name: Run Tests
         timeout-minutes: 360
         run: |
-          # Make test script executable
-          chmod +x ios-sdk/libs/test_ci.sh
+          # Make combined build and test script executable
+          chmod +x ios-sdk/libs/build_and_test_ci.sh
           
-          # Run tests using CI script
-          ./ios-sdk/libs/test_ci.sh
+          # Run tests using combined CI script (test mode)
+          ./ios-sdk/libs/build_and_test_ci.sh test
       
       - name: Upload Test Results
         if: always()
