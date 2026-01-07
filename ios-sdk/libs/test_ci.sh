@@ -80,21 +80,49 @@ if [ -z "$DESTINATIONS" ]; then
   echo "⚠️  No specific iPhone simulator found in destinations"
   echo "Attempting to list available simulators using xcrun simctl..."
   
-  # Try to list available simulators
-  AVAILABLE_SIMULATORS=$(xcrun simctl list devices available 2>/dev/null | grep "iPhone" || true)
+  # First, check for booted simulators (these are most likely to work)
+  BOOTED_SIMULATORS=$(xcrun simctl list devices 2>/dev/null | grep "iPhone" | grep "Booted" || true)
   
-  if [ -n "$AVAILABLE_SIMULATORS" ]; then
-    echo "Available iPhone simulators:"
-    echo "$AVAILABLE_SIMULATORS"
+  if [ -n "$BOOTED_SIMULATORS" ]; then
+    echo "✅ Found booted iPhone simulators:"
+    echo "$BOOTED_SIMULATORS"
     echo ""
-    echo "⚠️  Simulators exist but not showing in xcodebuild destinations"
-    echo "Using generic iOS Simulator destination - xcodebuild will select one automatically"
-    DESTINATION="platform=iOS Simulator,name=iPhone"
+    # Extract first booted simulator ID
+    BOOTED_SIMULATOR_ID=$(echo "$BOOTED_SIMULATORS" | head -1 | grep -oE '[A-F0-9]{8}-[A-F0-9]{4}-[A-F0-9]{4}-[A-F0-9]{4}-[A-F0-9]{12}' | head -1)
+    if [ -n "$BOOTED_SIMULATOR_ID" ]; then
+      echo "📱 Using booted simulator: $BOOTED_SIMULATOR_ID"
+      DESTINATION="platform=iOS Simulator,id=$BOOTED_SIMULATOR_ID"
+    else
+      echo "⚠️  Could not extract booted simulator ID, trying available simulators..."
+      AVAILABLE_SIMULATORS=$(xcrun simctl list devices available 2>/dev/null | grep "iPhone" || true)
+      if [ -n "$AVAILABLE_SIMULATORS" ]; then
+        echo "Available iPhone simulators:"
+        echo "$AVAILABLE_SIMULATORS"
+        echo ""
+        echo "Using generic iOS Simulator destination - xcodebuild will select one automatically"
+        DESTINATION="platform=iOS Simulator,name=iPhone"
+      else
+        echo "Trying generic destination as fallback..."
+        DESTINATION="platform=iOS Simulator,name=iPhone"
+      fi
+    fi
   else
-    echo "❌ No iPhone simulators found at all"
-    echo "This might be a CI environment issue - simulators may need to be booted first"
-    echo "Trying generic destination as fallback..."
-    DESTINATION="platform=iOS Simulator,name=iPhone"
+    # Try to list available simulators
+    AVAILABLE_SIMULATORS=$(xcrun simctl list devices available 2>/dev/null | grep "iPhone" || true)
+    
+    if [ -n "$AVAILABLE_SIMULATORS" ]; then
+      echo "Available iPhone simulators:"
+      echo "$AVAILABLE_SIMULATORS"
+      echo ""
+      echo "⚠️  Simulators exist but not showing in xcodebuild destinations"
+      echo "Using generic iOS Simulator destination - xcodebuild will select one automatically"
+      DESTINATION="platform=iOS Simulator,name=iPhone"
+    else
+      echo "❌ No iPhone simulators found at all"
+      echo "This might be a CI environment issue - simulators may need to be booted first"
+      echo "Trying generic destination as fallback..."
+      DESTINATION="platform=iOS Simulator,name=iPhone"
+    fi
   fi
 else
   # Extract first iPhone simulator ID (prefer newer OS versions)

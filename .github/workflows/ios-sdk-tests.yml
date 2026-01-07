@@ -63,6 +63,136 @@ jobs:
           echo "Full Swift version details:"
           xcrun swift --version
       
+      - name: Create and Boot iOS Simulator
+        run: |
+          echo "📱 Setting up iOS Simulator for tests..."
+          
+          # List available runtimes
+          echo "Available iOS runtimes:"
+          xcrun simctl list runtimes available | grep iOS || true
+          
+          # Get the latest iOS runtime identifier (e.g., "iOS-18-2" or "com.apple.CoreSimulator.SimRuntime.iOS-18-2")
+          # Try to get the runtime identifier directly
+          LATEST_RUNTIME_ID=$(xcrun simctl list runtimes available | grep -i "iOS" | tail -1 | awk '{print $NF}' | tr -d '()')
+          
+          if [ -z "$LATEST_RUNTIME_ID" ]; then
+            # Fallback: try to extract version number and construct identifier
+            RUNTIME_VERSION=$(xcrun simctl list runtimes available | grep -i "iOS" | tail -1 | sed -E 's/.*iOS[^0-9]*([0-9]+)[^0-9]*([0-9]+).*/\1-\2/' | head -1)
+            if [ -n "$RUNTIME_VERSION" ]; then
+              LATEST_RUNTIME_ID="iOS-$RUNTIME_VERSION"
+            else
+              # Last resort: try to find any iOS runtime
+              LATEST_RUNTIME_ID=$(xcrun simctl list runtimes available | grep -i "iOS" | head -1 | awk '{print $NF}' | tr -d '()')
+            fi
+          fi
+          
+          if [ -z "$LATEST_RUNTIME_ID" ]; then
+            echo "❌ No iOS runtime found. Available runtimes:"
+            xcrun simctl list runtimes available
+            exit 1
+          fi
+          
+          echo "📱 Using iOS runtime: $LATEST_RUNTIME_ID"
+          
+          # Check if a simulator already exists (check for any booted iPhone first, then available)
+          EXISTING_BOOTED=$(xcrun simctl list devices | grep -i "iPhone" | grep "Booted" | head -1 | sed 's/.*(\([A-F0-9-]*\)).*/\1/')
+          
+          if [ -n "$EXISTING_BOOTED" ]; then
+            echo "✅ Found booted iPhone simulator: $EXISTING_BOOTED"
+            SIMULATOR_ID="$EXISTING_BOOTED"
+          else
+            # Check for any available iPhone simulator
+            EXISTING_SIMULATOR=$(xcrun simctl list devices available | grep -i "iPhone" | head -1 | sed 's/.*(\([A-F0-9-]*\)).*/\1/')
+            
+            if [ -n "$EXISTING_SIMULATOR" ]; then
+              echo "✅ Found existing iPhone simulator: $EXISTING_SIMULATOR"
+              SIMULATOR_ID="$EXISTING_SIMULATOR"
+            else
+              # Create a new iPhone simulator
+              echo "📱 Creating new iPhone simulator..."
+              SIMULATOR_NAME="iPhone 15 Pro"
+              SIMULATOR_ID=$(xcrun simctl create "$SIMULATOR_NAME" "iPhone 15 Pro" "$LATEST_RUNTIME_ID" 2>&1)
+              CREATE_EXIT_CODE=$?
+              
+              if [ $CREATE_EXIT_CODE -eq 0 ] && [ -n "$SIMULATOR_ID" ]; then
+                # Success - extract UUID if needed
+                if echo "$SIMULATOR_ID" | grep -qE '[A-F0-9]{8}-[A-F0-9]{4}-[A-F0-9]{4}-[A-F0-9]{4}-[A-F0-9]{12}'; then
+                  SIMULATOR_ID=$(echo "$SIMULATOR_ID" | grep -oE '[A-F0-9]{8}-[A-F0-9]{4}-[A-F0-9]{4}-[A-F0-9]{4}-[A-F0-9]{12}' | head -1)
+                fi
+                echo "✅ Created simulator: $SIMULATOR_NAME (ID: $SIMULATOR_ID)"
+              else
+                echo "⚠️  Failed to create iPhone 15 Pro, trying iPhone 14 Pro..."
+                SIMULATOR_NAME="iPhone 14 Pro"
+                SIMULATOR_ID=$(xcrun simctl create "$SIMULATOR_NAME" "iPhone 14 Pro" "$LATEST_RUNTIME_ID" 2>&1)
+                CREATE_EXIT_CODE=$?
+                
+                if [ $CREATE_EXIT_CODE -eq 0 ] && [ -n "$SIMULATOR_ID" ]; then
+                  if echo "$SIMULATOR_ID" | grep -qE '[A-F0-9]{8}-[A-F0-9]{4}-[A-F0-9]{4}-[A-F0-9]{4}-[A-F0-9]{12}'; then
+                    SIMULATOR_ID=$(echo "$SIMULATOR_ID" | grep -oE '[A-F0-9]{8}-[A-F0-9]{4}-[A-F0-9]{4}-[A-F0-9]{4}-[A-F0-9]{12}' | head -1)
+                  fi
+                  echo "✅ Created simulator: $SIMULATOR_NAME (ID: $SIMULATOR_ID)"
+                else
+                  echo "⚠️  Failed to create iPhone 14 Pro, trying generic iPhone..."
+                  SIMULATOR_NAME="iPhone"
+                  SIMULATOR_ID=$(xcrun simctl create "$SIMULATOR_NAME" "iPhone" "$LATEST_RUNTIME_ID" 2>&1)
+                  CREATE_EXIT_CODE=$?
+                  
+                  if [ $CREATE_EXIT_CODE -eq 0 ] && [ -n "$SIMULATOR_ID" ]; then
+                    if echo "$SIMULATOR_ID" | grep -qE '[A-F0-9]{8}-[A-F0-9]{4}-[A-F0-9]{4}-[A-F0-9]{4}-[A-F0-9]{12}'; then
+                      SIMULATOR_ID=$(echo "$SIMULATOR_ID" | grep -oE '[A-F0-9]{8}-[A-F0-9]{4}-[A-F0-9]{4}-[A-F0-9]{4}-[A-F0-9]{12}' | head -1)
+                    fi
+                    echo "✅ Created simulator: $SIMULATOR_NAME (ID: $SIMULATOR_ID)"
+                  else
+                    echo "❌ Failed to create simulator. Error: $SIMULATOR_ID"
+                    echo "Available device types:"
+                    xcrun simctl list devicetypes | grep -i "iPhone" | head -5
+                    exit 1
+                  fi
+                fi
+              fi
+            fi
+          fi
+          
+          # Boot the simulator
+          echo "🚀 Booting simulator: $SIMULATOR_ID"
+          xcrun simctl boot "$SIMULATOR_ID" || {
+            # If already booted, that's fine
+            if xcrun simctl list devices | grep "$SIMULATOR_ID" | grep -q "Booted"; then
+              echo "✅ Simulator already booted"
+            else
+              echo "❌ Failed to boot simulator"
+              exit 1
+            fi
+          }
+          
+          # Wait for simulator to be ready
+          echo "⏳ Waiting for simulator to be ready..."
+          timeout=60
+          elapsed=0
+          while [ $elapsed -lt $timeout ]; do
+            if xcrun simctl list devices | grep "$SIMULATOR_ID" | grep -q "Booted"; then
+              # Check if simulator is actually ready by checking its state
+              STATE=$(xcrun simctl list devices | grep "$SIMULATOR_ID" | grep -oE "(Booted|Shutdown)")
+              if [ "$STATE" = "Booted" ]; then
+                echo "✅ Simulator is ready"
+                break
+              fi
+            fi
+            sleep 2
+            elapsed=$((elapsed + 2))
+            echo "   Waiting... ($elapsed/$timeout seconds)"
+          done
+          
+          if [ $elapsed -ge $timeout ]; then
+            echo "⚠️  Simulator boot timeout, but continuing..."
+          fi
+          
+          # Verify simulator is available
+          echo "📱 Verifying simulator availability..."
+          xcrun simctl list devices | grep "$SIMULATOR_ID" || echo "⚠️  Simulator not found in list"
+          
+          echo "✅ Simulator setup complete: $SIMULATOR_ID"
+      
       - name: Run Tests
         timeout-minutes: 360
         run: |
