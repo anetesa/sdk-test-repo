@@ -2,7 +2,7 @@ name: Build and Release iOS SDK
 
 on:
   push:
-    branches: [main]
+    branches: [main1]
     paths:
       - 'ios-sdk/**'
       - '.github/workflows/ios-sdk-release.yml'
