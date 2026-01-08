@@ -87,132 +87,6 @@ jobs:
             echo "✅ Tag $TAG does not exist, proceeding with release"
           fi
       
-      - name: Check if only framework files changed
-        if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && steps.check_tag.outputs.exists == 'false'
-        id: check_framework_only
-        run: |
-          # Get list of changed files in the commit
-          if [ "${{ github.event_name }}" == "push" ]; then
-            # For push events, compare with previous commit
-            CHANGED_FILES=$(git diff --name-only HEAD~1 HEAD 2>/dev/null || git diff --name-only origin/main HEAD 2>/dev/null || echo "")
-          else
-            # For workflow_dispatch, check what files exist
-            CHANGED_FILES=$(git ls-files ios-sdk/libs/AriseMobile.xcframework 2>/dev/null || echo "")
-          fi
-          
-          if [ -z "$CHANGED_FILES" ]; then
-            echo "framework_only=false" >> $GITHUB_OUTPUT
-            echo "build_needed=true" >> $GITHUB_OUTPUT
-            echo "📋 No changed files detected or workflow_dispatch - will build"
-            exit 0
-          fi
-          
-          echo "Changed files:"
-          echo "$CHANGED_FILES"
-          
-          # Check if only framework files changed (no source code changes)
-          FRAMEWORK_ONLY=true
-          BUILD_NEEDED=false
-          
-          # List of paths that indicate source code changes (require rebuild)
-          SOURCE_PATTERNS=(
-            "ios-sdk/src/"
-            "ios-sdk/Distribution/Sources/"
-            "ios-sdk/Distribution/Package.swift"
-            "*.swift"
-            "*.m"
-            "*.h"
-            "*.xcodeproj"
-            "*.pbxproj"
-            "build_framework"
-            "build_framework_ci"
-            "build_and_test_ci"
-          )
-          
-          # Check each changed file
-          while IFS= read -r file; do
-            if [ -z "$file" ]; then
-              continue
-            fi
-            
-            # Skip if it's a framework file
-            if [[ "$file" == *"AriseMobile.xcframework"* ]] || \
-               [[ "$file" == *"CloudCommerce.xcframework"* ]] || \
-               [[ "$file" == *"ios-sdk/libs/"* ]] && [[ "$file" != *"build_framework"* ]] && [[ "$file" != *"build_and_test"* ]]; then
-              echo "  ✅ Framework file: $file (skip)"
-              continue
-            fi
-            
-            # Check if it matches source code patterns
-            IS_SOURCE=false
-            for pattern in "${SOURCE_PATTERNS[@]}"; do
-              if [[ "$file" == *"$pattern"* ]]; then
-                IS_SOURCE=true
-                break
-              fi
-            done
-            
-            if [ "$IS_SOURCE" = true ]; then
-              echo "  🔨 Source code file: $file (requires build)"
-              FRAMEWORK_ONLY=false
-              BUILD_NEEDED=true
-              break
-            else
-              echo "  📄 Other file: $file"
-            fi
-          done <<< "$CHANGED_FILES"
-          
-          echo "framework_only=$FRAMEWORK_ONLY" >> $GITHUB_OUTPUT
-          echo "build_needed=$BUILD_NEEDED" >> $GITHUB_OUTPUT
-          
-          if [ "$FRAMEWORK_ONLY" = true ]; then
-            echo "✅ Only framework files changed - will use existing framework"
-          else
-            echo "🔨 Source code changed - will build new framework"
-          fi
-      
-      - name: Verify existing framework exists
-        if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && steps.check_tag.outputs.exists == 'false' && steps.check_framework_only.outputs.framework_only == 'true'
-        id: verify_framework
-        run: |
-          FRAMEWORK_PATH="ios-sdk/libs/AriseMobile.xcframework"
-          
-          if [ -d "$FRAMEWORK_PATH" ]; then
-            echo "exists=true" >> $GITHUB_OUTPUT
-            echo "✅ Existing framework found at: $FRAMEWORK_PATH"
-            
-            # Verify framework structure
-            if [ -f "$FRAMEWORK_PATH/Info.plist" ]; then
-              echo "✅ Framework Info.plist found"
-            else
-              echo "⚠️  Warning: Framework Info.plist not found"
-            fi
-            
-            # Check for device and simulator slices
-            DEVICE_FW=$(find "$FRAMEWORK_PATH" -path "*/ios-arm64/*.framework" -type d | head -1)
-            SIM_FW=$(find "$FRAMEWORK_PATH" -path "*simulator/*.framework" -type d | head -1)
-            
-            if [ -n "$DEVICE_FW" ]; then
-              echo "✅ Device framework found: $DEVICE_FW"
-            else
-              echo "⚠️  Warning: Device framework not found"
-            fi
-            
-            if [ -n "$SIM_FW" ]; then
-              echo "✅ Simulator framework found: $SIM_FW"
-            else
-              echo "⚠️  Warning: Simulator framework not found (device-only is OK)"
-            fi
-            
-            # Show framework size
-            FRAMEWORK_SIZE=$(du -sh "$FRAMEWORK_PATH" 2>/dev/null | cut -f1)
-            echo "Framework size: $FRAMEWORK_SIZE"
-          else
-            echo "exists=false" >> $GITHUB_OUTPUT
-            echo "❌ Framework not found at: $FRAMEWORK_PATH"
-            echo "Will fall back to building"
-          fi
-      
       - name: Create and Boot iOS Simulator
         run: |
           echo "📱 Setting up iOS Simulator for tests..."
@@ -429,28 +303,13 @@ jobs:
           if-no-files-found: warn
       
       - name: Build XCFramework
-        if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && steps.check_tag.outputs.exists == 'false' && (steps.check_framework_only.outputs.build_needed == 'true' || (steps.check_framework_only.outputs.framework_only == 'true' && steps.verify_framework.outputs.exists != 'true'))
+        if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && steps.check_tag.outputs.exists == 'false'
         run: |
           echo "🔨 Building new framework..."
           cd ios-sdk/libs
           chmod +x build_and_test_ci.sh
           bash build_and_test_ci.sh build
           ls -lh AriseMobile.xcframework
-      
-      - name: Use existing framework
-        if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && steps.check_tag.outputs.exists == 'false' && steps.check_framework_only.outputs.framework_only == 'true' && steps.verify_framework.outputs.exists == 'true'
-        run: |
-          echo "✅ Using existing framework from commit"
-          echo "Framework location: ios-sdk/libs/AriseMobile.xcframework"
-          ls -lh ios-sdk/libs/AriseMobile.xcframework
-          
-          # Verify framework is valid
-          if [ ! -f "ios-sdk/libs/AriseMobile.xcframework/Info.plist" ]; then
-            echo "❌ Error: Framework Info.plist not found"
-            exit 1
-          fi
-          
-          echo "✅ Existing framework verified and ready to use"
       
       - name: Detect Module Name from Project Settings
         if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && steps.check_tag.outputs.exists == 'false'
