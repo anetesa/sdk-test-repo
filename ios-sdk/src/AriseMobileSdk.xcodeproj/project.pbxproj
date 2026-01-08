@@ -94,15 +94,15 @@
 		DC9805042EC226D9008C119A /* TransactionSummaryMapper.swift in Sources */ = {isa = PBXBuildFile; fileRef = DC9805032EC226C6008C119A /* TransactionSummaryMapper.swift */; };
 		DC9805062EC227E1008C119A /* AmountDtoMapper.swift in Sources */ = {isa = PBXBuildFile; fileRef = DC9805052EC227D8008C119A /* AmountDtoMapper.swift */; };
 		DC9805082EC22904008C119A /* AvailableOperationMapper.swift in Sources */ = {isa = PBXBuildFile; fileRef = DC9805072EC22902008C119A /* AvailableOperationMapper.swift */; };
-		DC9E05912EE2E5DA00BDF286 /* AriseMobile.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = DC25D2462EAF7A9B00F942C7 /* AriseMobile.framework */; };
+				DC9E05912EE2E5DA00BDF286 /* AriseMobile.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = DC25D2462EAF7A9B00F942C7 /* AriseMobile.framework */; };
 		DC9E061F2EE2F5C600BDF286 /* CloudCommerce.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = DC69CC692EB130EF00A2657F /* CloudCommerce.xcframework */; };
 		DC9E06202EE2F5C600BDF286 /* CloudCommerce.xcframework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = DC69CC692EB130EF00A2657F /* CloudCommerce.xcframework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		DCAEC7162EB4B55F006DE62E /* Environment.swift in Sources */ = {isa = PBXBuildFile; fileRef = DCAEC7142EB4B548006DE62E /* Environment.swift */; };
 		DCAEC7192EB4B81B006DE62E /* EnvironmentSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = DCAEC7182EB4B819006DE62E /* EnvironmentSettings.swift */; };
 		DCB03C6B2EB3621500E180BE /* SwiftASN1 in Frameworks */ = {isa = PBXBuildFile; productRef = DCB03C6A2EB3621500E180BE /* SwiftASN1 */; };
 		DCB03C6D2EB3621500E180BE /* CryptoSwift in Frameworks */ = {isa = PBXBuildFile; productRef = DCB03C6C2EB3621500E180BE /* CryptoSwift */; };
-		DCB03C6E2EB3621500E180BE /* AriseMobile.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = DC25D2462EAF7A9B00F942C7 /* AriseMobile.framework */; };
-		DCB03C6F2EB3621500E180BE /* AriseMobile.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = DC25D2462EAF7A9B00F942C7 /* AriseMobile.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+				DCB03C6E2EB3621500E180BE /* AriseMobile.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = DC25D2462EAF7A9B00F942C7 /* AriseMobile.framework */; };
+				DCB03C6F2EB3621500E180BE /* AriseMobile.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = DC25D2462EAF7A9B00F942C7 /* AriseMobile.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		DCB03C722EB3621600E180BE /* CloudCommerce.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = DC69CC692EB130EF00A2657F /* CloudCommerce.xcframework */; };
 		DCB03C732EB3621600E180BE /* CloudCommerce.xcframework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = DC69CC692EB130EF00A2657F /* CloudCommerce.xcframework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		DCB03CCD2EB3711E00E180BE /* AriseLogger.swift in Sources */ = {isa = PBXBuildFile; fileRef = DCB03CCC2EB3711E00E180BE /* AriseLogger.swift */; };
@@ -155,6 +155,13 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
+		DC1AB5CB2EF546D80077E4FD /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = DC25D23E2EAF7A9B00F942C7 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = DCB03C382EB361E800E180BE;
+			remoteInfo = AriseTestAppForDebug;
+		};
 		DC9E05922EE2E5DA00BDF286 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = DC25D23E2EAF7A9B00F942C7 /* Project object */;
@@ -1003,6 +1010,11 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
+		DC1AB5CC2EF546D80077E4FD /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = DCB03C382EB361E800E180BE /* AriseTestAppForDebug */;
+			targetProxy = DC1AB5CB2EF546D80077E4FD /* PBXContainerItemProxy */;
+		};
 		DC9E05932EE2E5DA00BDF286 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = DC25D2452EAF7A9B00F942C7 /* AriseMobile */;
@@ -1158,7 +1170,6 @@
 				INFOPLIST_FILE = "AriseMobileSdk/AriseMobileSdk-Info.plist";
 				INFOPLIST_KEY_CFBundleDisplayName = AriseMobile;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
-				INFOPLIST_KEY_NSPrincipalClass = "";
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
 				IPHONEOS_DEPLOYMENT_TARGET = 17.6;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -1166,7 +1177,7 @@
 					"@executable_path/Frameworks",
 					"@loader_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.0.3;
+				MARKETING_VERSION = 1.0.1;
 				OTHER_LDFLAGS = "$(inherited)";
 				PRODUCT_BUNDLE_IDENTIFIER = com.arise.AriseMobile;
 				PRODUCT_MODULE_NAME = AriseMobile;
@@ -1197,7 +1208,6 @@
 				INFOPLIST_FILE = "AriseMobileSdk/AriseMobileSdk-Info.plist";
 				INFOPLIST_KEY_CFBundleDisplayName = AriseMobile;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
-				INFOPLIST_KEY_NSPrincipalClass = "";
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
 				IPHONEOS_DEPLOYMENT_TARGET = 17.6;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -1205,7 +1215,7 @@
 					"@executable_path/Frameworks",
 					"@loader_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.0.3;
+				MARKETING_VERSION = 1.0.1;
 				OTHER_LDFLAGS = "$(inherited)";
 				PRODUCT_BUNDLE_IDENTIFIER = com.arise.AriseMobile;
 				PRODUCT_MODULE_NAME = AriseMobile;
@@ -1223,11 +1233,11 @@
 			buildSettings = {
 				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = NO;
 				CLANG_ENABLE_MODULE_DEBUGGING = NO;
-				CODE_SIGNING_ALLOWED = YES;
-				CODE_SIGNING_REQUIRED = YES;
 				CODE_SIGN_ENTITLEMENTS = AriseMobileSdkTests/AriseMobileSdkTests.entitlements;
 				CODE_SIGN_IDENTITY = "-";
 				CODE_SIGN_STYLE = Automatic;
+				CODE_SIGNING_ALLOWED = YES;
+				CODE_SIGNING_REQUIRED = YES;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = "";
 				EMBEDDED_CONTENT_CONTAINS_SWIFT = NO;
@@ -1255,11 +1265,11 @@
 			buildSettings = {
 				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = NO;
 				CLANG_ENABLE_MODULE_DEBUGGING = NO;
-				CODE_SIGNING_ALLOWED = YES;
-				CODE_SIGNING_REQUIRED = YES;
 				CODE_SIGN_ENTITLEMENTS = AriseMobileSdkTests/AriseMobileSdkTests.entitlements;
 				CODE_SIGN_IDENTITY = "-";
 				CODE_SIGN_STYLE = Automatic;
+				CODE_SIGNING_ALLOWED = YES;
+				CODE_SIGNING_REQUIRED = YES;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = "";
 				EMBEDDED_CONTENT_CONTAINS_SWIFT = NO;
@@ -1288,11 +1298,11 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
-				CODE_SIGNING_ALLOWED = NO;
-				CODE_SIGNING_REQUIRED = NO;
 				CODE_SIGN_ENTITLEMENTS = AriseTestAppForDebug/AriseTestAppForDebug.entitlements;
 				CODE_SIGN_IDENTITY = "";
 				CODE_SIGN_STYLE = Automatic;
+				CODE_SIGNING_ALLOWED = NO;
+				CODE_SIGNING_REQUIRED = NO;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = "";
 				ENABLE_PREVIEWS = YES;
@@ -1336,11 +1346,11 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
-				CODE_SIGNING_ALLOWED = NO;
-				CODE_SIGNING_REQUIRED = NO;
 				CODE_SIGN_ENTITLEMENTS = AriseTestAppForDebug/AriseTestAppForDebug.entitlements;
 				CODE_SIGN_IDENTITY = "";
 				CODE_SIGN_STYLE = Automatic;
+				CODE_SIGNING_ALLOWED = NO;
+				CODE_SIGNING_REQUIRED = NO;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = "";
 				ENABLE_PREVIEWS = YES;
@@ -1392,7 +1402,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		DC25D24F2EAF7A9B00F942C7 /* Build configuration list for PBXNativeTarget "AriseMobile" */ = {
+		DC25D24F2EAF7A9B00F942C7 /* Build configuration list for PBXNativeTarget "AriseMobileSdk" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				DC25D2522EAF7A9B00F942C7 /* Debug */,
